@@ -29,7 +29,9 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is Authenticated) {
-            context.go('/home');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Login Success! (Home page deleted)')),
+            );
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),

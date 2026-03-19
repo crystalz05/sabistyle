@@ -12,7 +12,10 @@ class SplashPage extends StatelessWidget {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
-          context.go('/home');
+          // Home page was deleted, stay on splash or show info
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Authenticated! (Home page deleted)')),
+          );
         } else if (state is Unauthenticated) {
           context.go('/login');
         }
