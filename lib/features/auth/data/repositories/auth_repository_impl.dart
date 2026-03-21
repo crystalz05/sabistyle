@@ -1,34 +1,44 @@
-import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../../domain/entities/user.dart';
+import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../sources/auth_remote_data_source.dart';
 
+/// Implements [AuthRepository] by delegating to [AuthRemoteDatasource].
+/// In MVP this is a thin pass-through. The separation pays off when you
+/// add caching, offline support, or swap the backend.
 class AuthRepositoryImpl implements AuthRepository {
-  final AuthRemoteDataSource remoteDataSource;
+  const AuthRepositoryImpl(this._datasource);
 
-  AuthRepositoryImpl({required this.remoteDataSource});
-
-  @override
-  Future<Either<Failure, User>> login(String email, String password) async {
-    try {
-      final user = await remoteDataSource.login(email, password);
-      return Right(user);
-    } on Failure catch (e) {
-      return Left(e);
-    } catch (e) {
-      return const Left(ServerFailure("An unexpected error occurred"));
-    }
-  }
+  final AuthRemoteDatasource _datasource;
 
   @override
-  Future<Either<Failure, User?>> getAuthenticatedUser() async {
-    // Simulating checking against local storage if needed
-    return const Right(null);
-  }
+  Stream<AppUser?> get authStateChanges => _datasource.authStateChanges;
 
   @override
-  Future<Either<Failure, void>> logout() async {
-    return const Right(null);
-  }
+  AppUser? get currentUser => _datasource.currentUser;
+
+  @override
+  Future<AppUser> signUp({
+    required String fullName,
+    required String email,
+    required String password,
+  }) =>
+      _datasource.signUp(
+        fullName: fullName,
+        email: email,
+        password: password,
+      );
+
+  @override
+  Future<AppUser> signIn({
+    required String email,
+    required String password,
+  }) =>
+      _datasource.signIn(email: email, password: password);
+
+  @override
+  Future<void> signOut() => _datasource.signOut();
+
+  @override
+  Future<void> resetPassword({required String email}) =>
+      _datasource.resetPassword(email: email);
 }

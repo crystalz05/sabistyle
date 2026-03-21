@@ -1,17 +1,24 @@
-import '../../domain/entities/user.dart';
+import '../../domain/entities/app_user.dart';
 
-class UserModel extends User {
+/// Data-layer model that extends the domain [AppUser] entity.
+/// Handles serialisation from Supabase JSON responses.
+class UserModel extends AppUser {
   const UserModel({
     required super.id,
     required super.email,
-    required super.name,
+    required super.fullName,
+    super.phone,
+    super.avatarUrl,
   });
 
+  /// Deserialises a row returned by `public.users` joined with auth metadata.
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'],
-      email: json['email'],
-      name: json['name'],
+      id: json['id'] as String,
+      email: json['email'] as String? ?? '',
+      fullName: json['full_name'] as String? ?? '',
+      phone: json['phone'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
     );
   }
 
@@ -19,7 +26,9 @@ class UserModel extends User {
     return {
       'id': id,
       'email': email,
-      'name': name,
+      'full_name': fullName,
+      'phone': phone,
+      'avatar_url': avatarUrl,
     };
   }
 }
