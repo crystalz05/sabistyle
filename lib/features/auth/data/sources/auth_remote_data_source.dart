@@ -20,8 +20,17 @@ class AuthRemoteDatasource {
   Stream<AppUser?> get authStateChanges {
     return _client.auth.onAuthStateChange.asyncMap((event) async {
       final session = event.session;
-      if (session == null) return null;
-      return _fetchAppUser(session.user.id, session.user.email ?? '');
+      if (session == null || session.user.emailConfirmedAt == null) {
+        return null;
+      }
+      try {
+        return await _fetchAppUser(session.user.id, session.user.email ?? '');
+      } on AppException {
+        // Profile row missing — session was already revoked inside _fetchAppUser.
+        return null;
+      } catch (_) {
+        return null;
+      }
     });
   }
 
@@ -31,7 +40,7 @@ class AuthRemoteDatasource {
 
   AppUser? get currentUser {
     final user = _client.auth.currentUser;
-    if (user == null) return null;
+    if (user == null || user.emailConfirmedAt == null) return null;
     // We only have auth metadata here — profile comes from the DB later.
     return AppUser(
       id: user.id,
@@ -58,9 +67,9 @@ class AuthRemoteDatasource {
       );
 
       final user = response.user;
-      if (user == null) {
-        // Supabase returns user == null when email confirmation is required
-        // and "Confirm email" is on. Treat as success — user must verify first.
+      if (user == null || user.emailConfirmedAt == null) {
+        // Supabase returns user == null (or sets emailConfirmedAt == null)
+        // when email confirmation is required. Treat as pending verification.
         throw const AppException(
           'Account created! Please check your email to verify your account.',
           code: 'email_confirmation_required',
@@ -97,8 +106,13 @@ class AuthRemoteDatasource {
 
       final user = response.user;
       if (user == null) throw const AppException('Sign in failed.');
+      
+      if (user.emailConfirmedAt == null) {
+        await _client.auth.signOut();
+        throw const AppException('Please check your inbox and verify your email to continue.');
+      }
 
-      return _fetchAppUser(user.id, user.email ?? email);
+      return await _fetchAppUser(user.id, user.email ?? email);
     } on AppException {
       rethrow;
     } on AuthException catch (e) {
@@ -142,6 +156,10 @@ class AuthRemoteDatasource {
 
   /// Fetches the extended profile from public.users and merges it
   /// with the auth data so the domain entity is fully populated.
+  ///
+  /// Throws [AppException] (and signs out) when the profile row is missing
+  /// entirely, so callers can differentiate between a deleted user and a
+  /// transient network error.
   Future<AppUser> _fetchAppUser(String userId, String email) async {
     try {
       final data = await _client
@@ -150,16 +168,28 @@ class AuthRemoteDatasource {
           .eq('id', userId)
           .maybeSingle();
 
+      if (data == null) {
+        // Profile row does not exist — the user was deleted from the DB.
+        // Revoke the local session so they are treated as unauthenticated.
+        await _client.auth.signOut();
+        throw AppException(
+          'Your account could not be found. Please sign in again.',
+          code: 'profile_not_found',
+        );
+      }
+
       return AppUser(
         id: userId,
         email: email,
-        fullName: data?['full_name'] as String? ?? '',
-        phone: data?['phone'] as String?,
-        avatarUrl: data?['avatar_url'] as String?,
+        fullName: data['full_name'] as String? ?? '',
+        phone: data['phone'] as String?,
+        avatarUrl: data['avatar_url'] as String?,
       );
+    } on AppException {
+      rethrow;
     } catch (_) {
-      // Profile fetch failed but auth succeeded — return minimal user
-      // rather than failing the whole login.
+      // Transient network error — return a minimal user so the session
+      // is not invalidated on a flaky connection.
       return AppUser(id: userId, email: email, fullName: '');
     }
   }

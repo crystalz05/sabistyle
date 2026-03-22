@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
@@ -16,7 +17,8 @@ void main() async {
   );
 
   // Wire up dependency injection.
-  await di.init();
+  final prefs = await SharedPreferences.getInstance();
+  await di.init(prefs);
 
   runApp(const MyApp());
 }

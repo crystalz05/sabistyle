@@ -1,0 +1,619 @@
+SabiStyle
+Fashion E-Commerce Mobile App
+Product Requirements Document (PRD)
+Version 1.0  |  March 2025
+Stack: Flutter • Supabase • BLoC • Paystack
+1. Product Overview
+App Name
+SabiStyle
+Platform
+Android (Flutter)
+Target Market
+Nigerian fashion consumers, diaspora buyers
+Backend
+Supabase (PostgreSQL + Auth + Storage)
+State Management
+Flutter BLoC
+Payment
+Paystack
+MVP Goal
+Portfolio piece + Fiverr showcase. Full shopping flow from browse to order.
+1.1 Product Vision
+SabiStyle is a Nigerian fashion e-commerce app that lets customers browse clothing, add items to cart, checkout via Paystack, and track their orders — all from a clean, fast mobile experience. The app is built for the African fashion market and is scoped as a production-ready MVP.
+1.2 User Types
+Customer — browses, wishlists, buys, tracks orders
+Admin — manages products, orders, and promo codes via Supabase dashboard (no separate admin app in MVP)
+2. User Roles & Access
+Feature
+Customer
+Admin
+Browse products
+✅
+✅
+Purchase items
+✅
+❌
+Manage wishlist
+✅
+❌
+Track orders
+✅
+✅
+Add/edit products
+❌
+✅ (Supabase)
+Manage inventory
+❌
+✅ (Supabase)
+View all orders
+❌
+✅ (Supabase)
+Create promo codes
+❌
+✅ (Supabase)
+Note: Admin actions in MVP are handled directly through the Supabase dashboard — no separate admin panel is built in Flutter for this version.
+3. Screens & UI Requirements
+3.1 Auth Screens
+Screen
+Description
+BLoC / State
+Splash Screen
+Logo animation, checks auth state, routes to Onboarding or Home
+AuthBloc → AuthCheckRequested
+Onboarding
+3 slides shown on first launch only. Stored in SharedPreferences
+No BLoC — local state
+Sign Up
+Full name, email, password, confirm password. Email verification required
+AuthBloc → AuthSignUpRequested
+Login
+Email + password. 'Forgot password?' link. Show/hide password toggle
+AuthBloc → AuthSignInRequested
+Forgot Password
+Enter email, Supabase sends reset link to inbox
+AuthBloc → AuthResetPasswordRequested
+3.2 Home Screen
+Screen
+Description
+BLoC / State
+Home Feed
+Hero banner (auto-scroll), featured products, new arrivals section, deals row
+ProductBloc → FetchFeatured
+Home UI Elements
+Top app bar: SabiStyle logo (left), cart icon with badge (right), search icon
+Bottom nav bar: Home, Market, Wishlist, Orders, Profile
+Hero banner: auto-scrolling image slider with PageView (3–5 banners from Supabase Storage)
+Section headers: 'New Arrivals', 'Featured', 'Hot Deals' with 'See all' link
+Product cards: image, name, price, 'Add to Wishlist' icon
+3.3 Market / Browse Screens
+Screen
+Description
+BLoC / State
+Category Listing
+Grid of categories (Men, Women, Accessories, Shoes, etc.) with icons
+CategoryBloc
+Product Listing
+Products filtered by category. Filter by price, size, color. Sort: newest, price asc/desc
+ProductBloc → FetchByCategory
+Product Detail
+Image gallery (swipeable), size selector, color selector, description, reviews, Add to Cart / Wishlist
+ProductBloc + CartBloc + WishlistBloc
+Search
+Search bar with live results, recent search history (local), no-results empty state
+SearchBloc
+3.4 Wishlist Screen
+Screen
+Description
+BLoC / State
+Wishlist
+Grid of saved items. Each card shows image, name, price, Remove button, Add to Cart shortcut
+WishlistBloc
+3.5 Cart & Checkout Screens
+Screen
+Description
+BLoC / State
+Cart
+List of items, quantity controls (+ / -), item subtotals, order total, promo code input, Proceed to Checkout button
+CartBloc
+Checkout — Address
+Select saved address or add new one. Name, street, city, state, phone
+CheckoutBloc
+Checkout — Review
+Order summary: items, address, delivery estimate, total with breakdown
+CheckoutBloc
+Payment
+Paystack popup (card / bank transfer / USSD). Verifies payment on callback
+CheckoutBloc → PaymentVerified
+Order Confirmation
+Success screen with order number, estimated delivery, 'Continue Shopping' and 'View Order' buttons
+CheckoutBloc → OrderPlaced
+3.6 Orders Screen
+Screen
+Description
+BLoC / State
+Order History
+List of all past orders. Status badge: Pending, Processing, Shipped, Delivered, Cancelled
+OrderBloc → FetchOrders
+Order Detail
+Items in order, payment method, delivery address, status timeline tracker, Cancel button (if Pending)
+OrderBloc → FetchOrderDetail
+3.7 Profile Screen
+Screen
+Description
+BLoC / State
+Profile
+Avatar, full name, email, edit button. Links to sub-screens
+ProfileBloc
+Edit Profile
+Update name, phone, profile photo (image_picker → Supabase Storage)
+ProfileBloc → UpdateProfile
+Saved Addresses
+List of delivery addresses, add / edit / delete, set as default
+AddressBloc
+Change Password
+Current password, new password, confirm. Supabase updateUser()
+AuthBloc
+3.8 Notifications Screen
+Screen
+Description
+BLoC / State
+Notification Center
+In-app list of notifications: order updates, promos, restocks. Unread badge on nav bar
+NotificationBloc
+3.9 Settings Screen
+Screen
+Description
+BLoC / State
+Settings
+Notification toggles, Privacy Policy (WebView), Terms & Conditions (WebView), App version, Logout, Delete Account
+AuthBloc (logout/delete)
+4. Database Schema (Supabase / PostgreSQL)
+4.1 Tables
+users (extends Supabase auth.users)
+Column
+Type
+Notes
+id
+uuid
+FK → auth.users.id
+full_name
+text
+
+phone
+text
+nullable
+avatar_url
+text
+Supabase Storage URL
+created_at
+timestamp
+auto
+products
+Column
+Type
+Notes
+id
+uuid
+PK
+name
+text
+product name
+description
+text
+
+price
+numeric
+in Naira
+category_id
+uuid
+FK → categories
+images
+text[]
+array of Supabase Storage URLs
+sizes
+text[]
+e.g. ['S','M','L','XL']
+colors
+text[]
+e.g. ['Red','Black']
+stock_qty
+integer
+total available
+is_featured
+boolean
+appears on home feed
+is_active
+boolean
+soft delete / hide
+created_at
+timestamp
+auto
+categories
+Column
+Type
+Notes
+id
+uuid
+PK
+name
+text
+e.g. Men, Women, Shoes
+icon_url
+text
+Supabase Storage URL
+display_order
+integer
+sort order on UI
+orders
+Column
+Type
+Notes
+id
+uuid
+PK
+user_id
+uuid
+FK → users
+status
+text
+pending | processing | shipped | delivered | cancelled
+total_amount
+numeric
+in Naira
+promo_code_id
+uuid
+nullable FK → promo_codes
+discount_amount
+numeric
+0 if no promo
+address_id
+uuid
+FK → addresses
+paystack_ref
+text
+Paystack transaction reference
+created_at
+timestamp
+auto
+order_items
+Column
+Type
+Notes
+id
+uuid
+PK
+order_id
+uuid
+FK → orders
+product_id
+uuid
+FK → products
+quantity
+integer
+
+size
+text
+selected size
+color
+text
+selected color
+unit_price
+numeric
+price at time of purchase
+addresses
+Column
+Type
+Notes
+id
+uuid
+PK
+user_id
+uuid
+FK → users
+full_name
+text
+recipient name
+phone
+text
+
+street
+text
+
+city
+text
+
+state
+text
+e.g. Lagos, Rivers
+is_default
+boolean
+default address
+wishlists
+Column
+Type
+Notes
+id
+uuid
+PK
+user_id
+uuid
+FK → users
+product_id
+uuid
+FK → products
+created_at
+timestamp
+auto
+promo_codes
+Column
+Type
+Notes
+id
+uuid
+PK
+code
+text
+e.g. SABI20
+discount_type
+text
+percentage | fixed
+discount_value
+numeric
+e.g. 20 for 20%
+max_uses
+integer
+nullable = unlimited
+used_count
+integer
+tracks usage
+expires_at
+timestamp
+nullable
+notifications
+Column
+Type
+Notes
+id
+uuid
+PK
+user_id
+uuid
+FK → users
+title
+text
+
+body
+text
+
+type
+text
+order_update | promo | restock
+is_read
+boolean
+default false
+created_at
+timestamp
+auto
+5. How Admin Adds Items to the Store
+In MVP, there is no Flutter admin panel. The admin manages all store content directly through the Supabase Dashboard. Here is the exact workflow:
+5.1 Adding a Product
+Log in to Supabase dashboard at app.supabase.com
+Go to Storage → Create a bucket called 'products' (set to public)
+Upload product images to Storage → copy the public URLs
+Go to Table Editor → open the 'products' table
+Click Insert Row and fill in: name, description, price, category_id, images (paste URLs as array), sizes, colors, stock_qty
+Set is_featured = true if it should appear on the home feed
+Set is_active = true to make it visible in the app
+5.2 Adding a Category
+Upload category icon to Supabase Storage → copy URL
+Insert row in 'categories' table: name, icon_url, display_order
+5.3 Managing Orders
+All orders appear in the 'orders' table in real time
+To update order status: find the order row, edit the 'status' column (pending → processing → shipped → delivered)
+Customer sees the status update immediately in the app via Supabase realtime
+5.4 Creating Promo Codes
+Insert row in 'promo_codes' table: code, discount_type (percentage or fixed), discount_value, max_uses, expires_at
+Customer enters the code at checkout — the app validates against this table
+Post-MVP plan: Build a simple Flutter admin panel with product upload, image picker, and order management to replace the Supabase dashboard workflow.
+6. Supabase Storage Structure
+Bucket
+Contents
+Access
+products
+Product images
+Public
+avatars
+User profile photos
+Public
+banners
+Home feed banner images
+Public
+categories
+Category icons
+Public
+7. BLoC Architecture Summary
+BLoC
+Key Events
+Key States
+AuthBloc
+SignUp, SignIn, SignOut, ResetPw, Check
+Authenticated, Unauthenticated, Loading, Error
+ProductBloc
+FetchFeatured, FetchByCategory, FetchDetail
+ProductsLoaded, ProductLoading, ProductError
+CartBloc
+AddItem, RemoveItem, UpdateQty, ClearCart
+CartLoaded, CartUpdating
+WishlistBloc
+AddToWishlist, RemoveFromWishlist, FetchWishlist
+WishlistLoaded, WishlistError
+CheckoutBloc
+SetAddress, ApplyPromo, InitPayment, VerifyPayment
+CheckoutReady, PaymentSuccess, OrderPlaced, Error
+OrderBloc
+FetchOrders, FetchOrderDetail, CancelOrder
+OrdersLoaded, OrderLoading, OrderError
+ProfileBloc
+FetchProfile, UpdateProfile, UploadAvatar
+ProfileLoaded, ProfileUpdating, ProfileError
+AddressBloc
+FetchAddresses, AddAddress, DeleteAddress, SetDefault
+AddressesLoaded, AddressError
+SearchBloc
+SearchProducts, ClearSearch
+SearchResults, SearchLoading, SearchEmpty
+NotificationBloc
+FetchNotifications, MarkAsRead
+NotificationsLoaded, NotificationError
+8. Payment Flow — Paystack
+8.1 Flow
+Customer taps 'Pay' on the Checkout Review screen
+App calls Paystack initialize endpoint with amount, email, and a unique reference
+Paystack popup opens (card / bank transfer / USSD options)
+On payment success, Paystack returns the reference to the app callback
+App calls Paystack verify endpoint with the reference to confirm payment server-side
+On verified: order record is created in Supabase with status = 'processing'
+Customer is routed to Order Confirmation screen
+8.2 Package
+Use flutter_paystack package. Initialize with your public key in main.dart. Use the charge() method with the amount in kobo (multiply Naira × 100).
+9. Navigation — GoRouter
+9.1 Route Structure
+/splash → SplashScreen
+/onboarding → OnboardingScreen
+/login → LoginScreen
+/signup → SignUpScreen
+/forgot-password → ForgotPasswordScreen
+/home → HomeScreen (shell with bottom nav)
+/home/market → CategoryListingScreen
+/home/market/:categoryId → ProductListingScreen
+/home/market/product/:productId → ProductDetailScreen
+/home/market/search → SearchScreen
+/home/wishlist → WishlistScreen
+/home/cart → CartScreen
+/home/cart/checkout → CheckoutScreen
+/home/cart/checkout/payment → PaymentScreen
+/home/cart/confirmation → OrderConfirmationScreen
+/home/orders → OrderHistoryScreen
+/home/orders/:orderId → OrderDetailScreen
+/home/profile → ProfileScreen
+/home/profile/edit → EditProfileScreen
+/home/profile/addresses → AddressesScreen
+/home/profile/change-password → ChangePasswordScreen
+/home/notifications → NotificationCenterScreen
+/home/settings → SettingsScreen
+9.2 Auth Guard
+GoRouter redirect checks AuthBloc state on every navigation. If AuthUnauthenticated and route requires auth → redirect to /login. If AuthAuthenticated and route is /login or /signup → redirect to /home.
+10. Build Plan (Post-Exam, Starting March 19)
+Start Date: March 19  |  Ship Date: April 30  |  Duration: 6 Weeks
+Week 1 — Foundation (March 19–25)
+Goal: Project fully set up, Supabase live, Auth BLoC complete and tested.
+Day
+Task
+Wed Mar 19
+Create Flutter project, set up folder structure, add all pubspec.yaml dependencies, configure .env
+Thu Mar 20
+Set up Supabase project — create all 8 tables, Storage buckets, enable Realtime on notifications table
+Fri Mar 21
+Configure get_it DI, write AuthRemoteDatasource and AuthRepository
+Sat Mar 22
+Full AuthBloc (events, states, bloc) — already written, wire it up and test
+Sun Mar 23
+GoRouter setup with auth guard, Splash screen with auth check routing
+Mon Mar 24
+Onboarding screen (3 slides, SharedPreferences first-launch flag)
+Tue Mar 25
+Sign Up screen + Login screen UI wired to AuthBloc
+Week 2 — Auth Done + Home + Market (March 26–April 1)
+Goal: Auth fully working end-to-end. User can browse products and view details.
+Day
+Task
+Wed Mar 26
+Forgot Password screen + error handling on all auth screens. End-to-end auth test: signup → verify → login → logout
+Thu Mar 27
+ProductBloc + ProductRepository + ProductDatasource
+Fri Mar 28
+Home screen — bottom nav shell, banner slider, featured products row, new arrivals
+Sat Mar 29
+Category listing screen + product listing screen with filters
+Sun Mar 30
+Product detail screen — image gallery, size/color selector, add to cart/wishlist buttons
+Mon Mar 31
+SearchBloc + Search screen with live results and recent search history
+Tue Apr 1
+Bug fixes from Week 2 — test full browse flow from home to product detail
+Week 3 — Wishlist + Cart + Checkout (April 2–8)
+Goal: User can wishlist items, build a cart, apply promo codes, and reach payment.
+Day
+Task
+Wed Apr 2
+WishlistBloc + Wishlist screen. Wire wishlist button on product detail and home cards
+Thu Apr 3
+CartBloc + Cart screen (add, remove, update quantity, item subtotals, order total)
+Fri Apr 4
+Promo code input + validation against Supabase promo_codes table
+Sat Apr 5
+AddressBloc + Saved Addresses screen (add, edit, delete, set default)
+Sun Apr 6
+Checkout — Address selection screen wired to AddressBloc
+Mon Apr 7
+Checkout — Order review screen (items, address, total breakdown)
+Tue Apr 8
+Test full flow: add to cart → apply promo → select address → reach review screen
+Week 4 — Payment + Orders (April 9–15)
+Goal: Full purchase flow working end-to-end. Orders visible and trackable.
+Day
+Task
+Wed Apr 9
+Paystack setup — initialize charge with amount in kobo, handle success/failure callback
+Thu Apr 10
+Payment verification + create order record in Supabase on verified payment
+Fri Apr 11
+Order confirmation screen (order number, estimated delivery, CTA buttons)
+Sat Apr 12
+OrderBloc + Order history screen with status badges
+Sun Apr 13
+Order detail screen with status timeline tracker
+Mon Apr 14
+Cancel order logic (only if status = pending)
+Tue Apr 15
+End-to-end test: cart → pay → confirmed → visible in order history with correct status
+Week 5 — Profile + Notifications + Settings (April 16–22)
+Goal: Full user account management working. Real-time notifications live.
+Day
+Task
+Wed Apr 16
+ProfileBloc + Profile screen (view name, email, avatar)
+Thu Apr 17
+Edit profile — name, phone, avatar upload to Supabase Storage via image_picker
+Fri Apr 18
+Change password screen wired to AuthBloc
+Sat Apr 19
+NotificationBloc + Notification center screen with Supabase Realtime subscription
+Sun Apr 20
+Unread notification badge on bottom nav bar wired to notification count
+Mon Apr 21
+Settings screen — logout, delete account, T&Cs and Privacy Policy (WebView)
+Tue Apr 22
+Test full profile flow: edit profile → change password → receive notification → settings
+Week 6 — Polish + Test + Ship (April 23–30)
+Goal: App is production-ready. APK built. Fiverr updated. Portfolio live.
+Day
+Task
+Wed Apr 23
+Empty states on every screen (empty cart, no orders, no wishlist, no search results)
+Thu Apr 24
+Loading skeletons on Home feed and Product listing screens
+Fri Apr 25
+Error handling — no internet banner, retry buttons, graceful Supabase error messages
+Sat Apr 26
+Full app walkthrough on physical Android device — log every bug and rough edge
+Sun Apr 27
+Fix all bugs from walkthrough. Image caching check (cached_network_image everywhere)
+Mon Apr 28
+Build release APK — flutter build apk --release. Fix any release-mode issues
+Tue Apr 29
+Record screen demo video + take clean screenshots for portfolio and Fiverr gallery
+Wed Apr 30
+✅ Push code to GitHub with clean README. Update Fiverr gig. SHIPPED.
+SabiStyle — PRD v1.0
+Built by Michael | Flutter + Supabase + BLoC

@@ -10,24 +10,34 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _LoginPageState extends State<LoginPage>
+class _SignUpPageState extends State<SignUpPage>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
+
+  final _nameFocusNode = FocusNode();
   final _emailFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
+  final _confirmFocusNode = FocusNode();
 
   bool _obscurePassword = true;
+  bool _obscureConfirm = true;
+
+  bool _isNameDirty = false;
   bool _isEmailDirty = false;
   bool _isPasswordDirty = false;
+  bool _isConfirmDirty = false;
 
   late final AnimationController _fadeController;
   late final Animation<double> _fadeAnim;
@@ -49,15 +59,30 @@ class _LoginPageState extends State<LoginPage>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
 
+    _nameFocusNode.addListener(() {
+      if (!_nameFocusNode.hasFocus && !_isNameDirty) {
+        setState(() => _isNameDirty = true);
+        _formKey.currentState?.validate();
+      }
+    });
+
     _emailFocusNode.addListener(() {
       if (!_emailFocusNode.hasFocus && !_isEmailDirty) {
         setState(() => _isEmailDirty = true);
         _formKey.currentState?.validate();
       }
     });
+
     _passwordFocusNode.addListener(() {
       if (!_passwordFocusNode.hasFocus && !_isPasswordDirty) {
         setState(() => _isPasswordDirty = true);
+        _formKey.currentState?.validate();
+      }
+    });
+
+    _confirmFocusNode.addListener(() {
+      if (!_confirmFocusNode.hasFocus && !_isConfirmDirty) {
+        setState(() => _isConfirmDirty = true);
         _formKey.currentState?.validate();
       }
     });
@@ -66,11 +91,21 @@ class _LoginPageState extends State<LoginPage>
   @override
   void dispose() {
     _fadeController.dispose();
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmController.dispose();
+    _nameFocusNode.dispose();
     _emailFocusNode.dispose();
     _passwordFocusNode.dispose();
+    _confirmFocusNode.dispose();
     super.dispose();
+  }
+
+  String? _validateName(String? value) {
+    if (!_isNameDirty) return null;
+    if (value == null || value.trim().isEmpty) return 'Full name is required';
+    return null;
   }
 
   String? _validateEmail(String? value) {
@@ -88,14 +123,24 @@ class _LoginPageState extends State<LoginPage>
     return null;
   }
 
+  String? _validateConfirmPassword(String? value) {
+    if (!_isConfirmDirty) return null;
+    if (value == null || value.isEmpty) return 'Please confirm your password';
+    if (value != _passwordController.text) return 'Passwords do not match';
+    return null;
+  }
+
   void _submit(BuildContext context) {
     setState(() {
+      _isNameDirty = true;
       _isEmailDirty = true;
       _isPasswordDirty = true;
+      _isConfirmDirty = true;
     });
     if (_formKey.currentState?.validate() != true) return;
     context.read<AuthBloc>().add(
-          LoginRequested(
+          SignUpRequested(
+            fullName: _nameController.text.trim(),
             email: _emailController.text.trim(),
             password: _passwordController.text,
           ),
@@ -108,6 +153,11 @@ class _LoginPageState extends State<LoginPage>
       listener: (context, state) {
         if (state is AuthError) {
           AppSnackBar.showError(context, message: state.message);
+        }
+        if (state is AwaitingVerification) {
+          context.go(
+            '${AppRoutes.verifyEmail}?email=${Uri.encodeComponent(state.email)}',
+          );
         }
       },
       child: Scaffold(
@@ -131,7 +181,7 @@ class _LoginPageState extends State<LoginPage>
                     const SizedBox(height: 24),
                     _buildDivider(),
                     const SizedBox(height: 24),
-                    _buildSignUpRow(context),
+                    _buildLoginRow(context),
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -181,7 +231,7 @@ class _LoginPageState extends State<LoginPage>
         ),
         const SizedBox(height: 28),
         const Text(
-          'Welcome back',
+          'Create an account',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
@@ -191,7 +241,7 @@ class _LoginPageState extends State<LoginPage>
         ),
         const SizedBox(height: 6),
         Text(
-          'Sign in to continue shopping',
+          'Join us to start shopping',
           style: TextStyle(
             fontSize: 15,
             color: Colors.grey.shade500,
@@ -209,6 +259,25 @@ class _LoginPageState extends State<LoginPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          AppTextField(
+            label: 'Full Name',
+            controller: _nameController,
+            focusNode: _nameFocusNode,
+            validator: _validateName,
+            keyboardType: TextInputType.name,
+            textInputAction: TextInputAction.next,
+            onChanged: (_) {
+              if (_isNameDirty) _formKey.currentState?.validate();
+            },
+            onFieldSubmitted: (_) {
+              _isNameDirty = true;
+              _formKey.currentState?.validate();
+              _emailFocusNode.requestFocus();
+            },
+            hintText: 'John Doe',
+            prefixIcon: Icons.person_outline_rounded,
+          ),
+          const SizedBox(height: 20),
           AppTextField(
             label: 'Email address',
             controller: _emailController,
@@ -234,14 +303,14 @@ class _LoginPageState extends State<LoginPage>
             focusNode: _passwordFocusNode,
             validator: _validatePassword,
             obscureText: _obscurePassword,
-            textInputAction: TextInputAction.done,
+            textInputAction: TextInputAction.next,
             onChanged: (_) {
               if (_isPasswordDirty) _formKey.currentState?.validate();
             },
             onFieldSubmitted: (_) {
               _isPasswordDirty = true;
               _formKey.currentState?.validate();
-              _submit(context);
+              _confirmFocusNode.requestFocus();
             },
             hintText: '••••••••',
             prefixIcon: Icons.lock_outline_rounded,
@@ -257,21 +326,34 @@ class _LoginPageState extends State<LoginPage>
                   setState(() => _obscurePassword = !_obscurePassword),
             ),
           ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {},
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF6200EE),
-                padding: EdgeInsets.zero,
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          const SizedBox(height: 20),
+          AppTextField(
+            label: 'Confirm Password',
+            controller: _confirmController,
+            focusNode: _confirmFocusNode,
+            validator: _validateConfirmPassword,
+            obscureText: _obscureConfirm,
+            textInputAction: TextInputAction.done,
+            onChanged: (_) {
+              if (_isConfirmDirty) _formKey.currentState?.validate();
+            },
+            onFieldSubmitted: (_) {
+              _isConfirmDirty = true;
+              _formKey.currentState?.validate();
+              _submit(context);
+            },
+            hintText: '••••••••',
+            prefixIcon: Icons.lock_outline_rounded,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureConfirm
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: Colors.grey.shade500,
+                size: 20,
               ),
-              child: const Text(
-                'Forgot password?',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              ),
+              onPressed: () =>
+                  setState(() => _obscureConfirm = !_obscureConfirm),
             ),
           ),
         ],
@@ -284,7 +366,7 @@ class _LoginPageState extends State<LoginPage>
       builder: (context, state) {
         final isLoading = state is AuthLoading;
         return AppButton(
-          text: 'Sign In',
+          text: 'Sign Up',
           onPressed: () => _submit(context),
           isLoading: isLoading,
         );
@@ -313,16 +395,16 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  Widget _buildSignUpRow(BuildContext context) {
+  Widget _buildLoginRow(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          "Don't have an account?",
+          "Already have an account?",
           style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
         ),
         TextButton(
-          onPressed: () => context.go(AppRoutes.signup),
+          onPressed: () => context.go(AppRoutes.login),
           style: TextButton.styleFrom(
             foregroundColor: const Color(0xFF6200EE),
             padding: const EdgeInsets.only(left: 4),
@@ -330,7 +412,7 @@ class _LoginPageState extends State<LoginPage>
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           child: const Text(
-            'Sign Up',
+            'Sign In',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
           ),
         ),

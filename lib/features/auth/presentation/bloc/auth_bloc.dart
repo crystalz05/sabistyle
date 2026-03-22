@@ -132,7 +132,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       emit(Authenticated(user));
     } on AppException catch (e) {
-      emit(AuthError(e.message));
+      if (e.code == 'email_confirmation_required') {
+        // Not an error — user needs to verify their email first.
+        emit(AwaitingVerification(event.email));
+      } else {
+        emit(AuthError(e.message));
+      }
     } catch (_) {
       emit(const AuthError('Sign up failed. Please try again.'));
     }
