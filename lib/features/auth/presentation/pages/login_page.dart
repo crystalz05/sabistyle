@@ -167,27 +167,33 @@ class _LoginPageState extends State<LoginPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Logo mark
-        Container(
-          width: 54,
-          height: 54,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF7C3AED), Color(0xFF6200EE)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        
+        Row(
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF7C3AED), Color(0xFF6200EE)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.shopping_bag_rounded,
+                color: Colors.white,
+                size: 30,
+              ),
             ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Icon(
-            Icons.shopping_bag_rounded,
-            color: Colors.white,
-            size: 30,
-          ),
+            Text("Sabi Style")
+          ],
         ),
+        // Logo mark
         const SizedBox(height: 28),
         const Text(
-          'Welcome back 👋',
+          'Welcome back',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
@@ -213,6 +219,7 @@ class _LoginPageState extends State<LoginPage>
       key: _formKey,
       autovalidateMode: AutovalidateMode.disabled,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Email field ────────────────────────────────────────────────
           _FieldLabel(label: 'Email address'),
