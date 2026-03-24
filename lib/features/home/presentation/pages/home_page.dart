@@ -37,13 +37,11 @@ class _HomePageState extends State<HomePage> {
     return BlocProvider.value(
       value: _homeBloc,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF7F7FB),
-        appBar: _buildAppBar(),
+        appBar: _buildAppBar(context),
         body: BlocBuilder<HomeBloc, HomeState>(
           builder: (context, state) {
             if (state is HomeLoading || state is HomeInitial) {
-              return const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF7C3AED)));
+              return const Center(child: CircularProgressIndicator());
             } else if (state is HomeError) {
               return _buildErrorState(context, state.message);
             } else if (state is HomeLoaded) {
@@ -56,30 +54,23 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  AppBar _buildAppBar() {
+  AppBar _buildAppBar(BuildContext context) {
+    final theme = Theme.of(context);
     return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      title: const Text(
+      title: Text(
         'SabiStyle',
-        style: TextStyle(
-          fontWeight: FontWeight.w800,
-          color: Color(0xFF1A1A2E),
-          fontSize: 22,
-          letterSpacing: -0.5,
-        ),
+        style: theme.textTheme.titleLarge,
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.search_rounded, color: Color(0xFF1A1A2E)),
+          icon: Icon(Icons.search_rounded, color: theme.colorScheme.onSurface),
           onPressed: () {},
         ),
         Stack(
           alignment: Alignment.center,
           children: [
             IconButton(
-              icon: const Icon(Icons.local_mall_outlined,
-                  color: Color(0xFF1A1A2E)),
+              icon: Icon(Icons.local_mall_outlined, color: theme.colorScheme.onSurface),
               onPressed: () {},
             ),
             Positioned(
@@ -87,16 +78,17 @@ class _HomePageState extends State<HomePage> {
               top: 8,
               child: Container(
                 padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFF5252),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.error,
                   shape: BoxShape.circle,
                 ),
-                child: const Text(
+                child: Text(
                   '2',
-                  style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onError, 
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                  ) ?? const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -108,26 +100,23 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildErrorState(BuildContext context, String message) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline_rounded, size: 64, color: Colors.grey),
+          Icon(Icons.error_outline_rounded, size: 64, color: theme.colorScheme.error),
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
               message,
-              style: const TextStyle(color: Colors.grey),
+              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
               textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7C3AED),
-              foregroundColor: Colors.white,
-            ),
             onPressed: () => context.read<HomeBloc>().add(FetchHomeData()),
             child: const Text('Retry'),
           ),
@@ -138,10 +127,9 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildLoadedState(BuildContext context, HomeLoaded state) {
     return RefreshIndicator(
-      color: const Color(0xFF7C3AED),
+      color: Theme.of(context).colorScheme.primary,
       onRefresh: () async {
         context.read<HomeBloc>().add(FetchHomeData());
-        // Simple delay to let the UI show refresh indicator smoothly
         await Future.delayed(const Duration(seconds: 1));
       },
       child: SingleChildScrollView(
@@ -150,15 +138,15 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 16),
-            _buildHeroBanner(),
+            _buildHeroBanner(context),
             const SizedBox(height: 24),
-            _buildCategories(state),
+            _buildCategories(context, state),
             const SizedBox(height: 32),
-            _buildSectionHeader('Featured Products', () {}),
+            _buildSectionHeader(context, 'Featured Products', () {}),
             const SizedBox(height: 16),
             _buildHorizontalProductList(state.featuredProducts),
             const SizedBox(height: 32),
-            _buildSectionHeader('New Arrivals', () {}),
+            _buildSectionHeader(context, 'New Arrivals', () {}),
             const SizedBox(height: 16),
             _buildHorizontalProductList(state.newArrivals),
             const SizedBox(height: 48),
@@ -168,7 +156,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHeroBanner() {
+  Widget _buildHeroBanner(BuildContext context) {
     final banners = [
       'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop',
@@ -193,28 +181,24 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            child: const Padding(
-              padding: EdgeInsets.all(20),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Super Sale',
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
                       letterSpacing: 1.5,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'Up to 50% Off\nSelected Items',
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
                       height: 1.2,
                     ),
                   ),
@@ -227,21 +211,18 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCategories(HomeLoaded state) {
+  Widget _buildCategories(BuildContext context, HomeLoaded state) {
     if (state.categories.isEmpty) return const SizedBox();
+    final theme = Theme.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
             'Categories',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1A2E),
-            ),
+            style: theme.textTheme.titleMedium,
           ),
         ),
         const SizedBox(height: 16),
@@ -260,10 +241,9 @@ class _HomePageState extends State<HomePage> {
                     Container(
                       height: 60,
                       width: 60,
-                      // 1. Clip the contents so the image doesn't "bleed" outside the circle
                       clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: theme.colorScheme.surface,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -273,28 +253,21 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ],
                       ),
-                      // 2. Remove or set padding to 0 so the image can reach the edges
                       padding: EdgeInsets.zero,
                       child: cat.iconUrl != null && cat.iconUrl!.isNotEmpty
                           ? Image.network(
-                        cat.iconUrl!,
-                        // 3. Use BoxFit.cover to fill the entire space
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(Icons.category,
-                              color: Color(0xFF7C3AED));
-                        },
-                      )
-                          : const Icon(Icons.category, color: Color(0xFF7C3AED)),
+                              cat.iconUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(Icons.category, color: theme.colorScheme.secondary);
+                              },
+                            )
+                          : Icon(Icons.category, color: theme.colorScheme.secondary),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       cat.name,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1A2E),
-                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -305,20 +278,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSectionHeader(String title, VoidCallback onSeeAll) {
+  Widget _buildSectionHeader(BuildContext context, String title, VoidCallback onSeeAll) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1A2E),
-            ),
-          ),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
           TextButton(
             onPressed: onSeeAll,
             style: TextButton.styleFrom(
@@ -326,14 +292,7 @@ class _HomePageState extends State<HomePage> {
               minimumSize: const Size(0, 0),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text(
-              'See all',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF7C3AED),
-              ),
-            ),
+            child: Text('See all', style: Theme.of(context).textTheme.labelMedium),
           ),
         ],
       ),
@@ -357,12 +316,8 @@ class _HomePageState extends State<HomePage> {
         itemBuilder: (context, index) {
           return ProductCard(
             product: products[index],
-            onTap: () {
-              // Navigate to Product Details
-            },
-            onFavoriteTap: () {
-              // Toggle Wishlist
-            },
+            onTap: () {},
+            onFavoriteTap: () {},
           );
         },
       ),

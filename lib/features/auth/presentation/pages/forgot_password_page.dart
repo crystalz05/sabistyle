@@ -91,12 +91,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF7F7FB),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF1A1A2E)),
+            icon: Icon(Icons.arrow_back_rounded, color: Theme.of(context).colorScheme.onSurface),
             onPressed: () => context.pop(),
           ),
         ),
@@ -138,38 +138,35 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
               width: 54,
               height: 54,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFF6200EE)],
+                gradient: LinearGradient(
+                  colors: [Theme.of(context).colorScheme.secondary, Theme.of(context).colorScheme.primary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.lock_reset_rounded,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
                 size: 30,
               ),
             ),
           ],
         ),
         const SizedBox(height: 28),
-        const Text(
+        Text(
           'Reset password',
-          style: TextStyle(
-            fontSize: 28,
+          style: Theme.of(context).textTheme.displaySmall?.copyWith(
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1A1A2E),
+            color: Theme.of(context).colorScheme.onSurface,
             letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 6),
         Text(
           "Enter your email and we'll send you a link to reset your password.",
-          style: TextStyle(
-            fontSize: 15,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             color: Colors.grey.shade500,
-            fontWeight: FontWeight.w400,
             height: 1.4,
           ),
         ),

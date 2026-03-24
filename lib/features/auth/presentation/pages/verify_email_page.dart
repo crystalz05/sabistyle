@@ -10,8 +10,9 @@ class VerifyEmailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7FB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -23,33 +24,32 @@ class VerifyEmailPage extends StatelessWidget {
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF7C3AED), Color(0xFF6200EE)],
+                  gradient: LinearGradient(
+                    colors: [theme.colorScheme.secondary, theme.colorScheme.primary],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF6200EE).withAlpha(60),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.25),
                       blurRadius: 24,
                       offset: const Offset(0, 12),
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.mark_email_unread_rounded,
                   size: 52,
-                  color: Colors.white,
+                  color: theme.colorScheme.onPrimary,
                 ),
               ),
               const SizedBox(height: 40),
-              const Text(
+              Text(
                 'Check your email',
-                style: TextStyle(
-                  fontSize: 28,
+                style: theme.textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1A1A2E),
+                  color: theme.colorScheme.onSurface,
                   letterSpacing: -0.5,
                 ),
                 textAlign: TextAlign.center,
@@ -58,8 +58,7 @@ class VerifyEmailPage extends StatelessWidget {
               RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
-                  style: TextStyle(
-                    fontSize: 16,
+                  style: theme.textTheme.bodyLarge?.copyWith(
                     color: Colors.grey.shade600,
                     height: 1.5,
                   ),
@@ -67,9 +66,9 @@ class VerifyEmailPage extends StatelessWidget {
                     const TextSpan(text: "We've sent a verification link to\n"),
                     TextSpan(
                       text: email,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF6200EE),
+                        color: theme.colorScheme.primary,
                       ),
                     ),
                     const TextSpan(
@@ -85,18 +84,18 @@ class VerifyEmailPage extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6200EE).withAlpha(12),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFF6200EE).withAlpha(40),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
                     width: 1,
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.info_outline_rounded,
-                      color: Color(0xFF6200EE),
+                      color: theme.colorScheme.primary,
                       size: 20,
                     ),
                     const SizedBox(width: 12),
@@ -119,18 +118,17 @@ class VerifyEmailPage extends StatelessWidget {
                 child: FilledButton(
                   onPressed: () => context.go(AppRoutes.login),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF6200EE),
+                    backgroundColor: theme.colorScheme.primary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Go to Sign In',
-                    style: TextStyle(
-                      fontSize: 16,
+                    style: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: theme.colorScheme.onPrimary,
                     ),
                   ),
                 ),

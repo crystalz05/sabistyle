@@ -27,7 +27,7 @@ class MainNavigationShell extends StatelessWidget {
           child: Container(
             height: 70,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
               borderRadius: BorderRadius.circular(35),
               boxShadow: [
                 BoxShadow(
@@ -110,7 +110,7 @@ class _NavBarItem extends StatelessWidget {
         curve: Curves.easeOutQuint,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF7C3AED).withValues(alpha: 0.1) : Colors.transparent,
+          color: isSelected ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Row(
@@ -118,7 +118,7 @@ class _NavBarItem extends StatelessWidget {
           children: [
             Icon(
               isSelected ? activeIcon : icon,
-              color: isSelected ? const Color(0xFF7C3AED) : const Color(0xFF9E9E9E),
+              color: isSelected ? Theme.of(context).colorScheme.secondary : Colors.grey,
               size: 24,
             ),
             AnimatedSize(
@@ -133,10 +133,8 @@ class _NavBarItem extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           label,
-                          style: const TextStyle(
-                            color: Color(0xFF7C3AED),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.secondary,
                           ),
                         ),
                       ],

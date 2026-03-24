@@ -55,7 +55,7 @@ class _SplashPageState extends State<SplashPage>
                 width: 90,
                 height: 90,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Icon(
@@ -65,27 +65,25 @@ class _SplashPageState extends State<SplashPage>
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'SabiStyle',
-                style: TextStyle(
-                  fontSize: 34,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: colorScheme.onPrimary,
                   letterSpacing: 1.2,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Fashion for every occasion',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white.withAlpha(200),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onPrimary.withValues(alpha: 0.8),
                   letterSpacing: 0.4,
                 ),
               ),
               const SizedBox(height: 64),
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
                 strokeWidth: 2.5,
               ),
             ],

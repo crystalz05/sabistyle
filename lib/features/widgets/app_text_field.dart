@@ -32,15 +32,15 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 13,
+          style: theme.textTheme.labelMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A2E),
+            color: theme.colorScheme.onSurface,
             letterSpacing: 0.1,
           ),
         ),
@@ -62,7 +62,7 @@ class AppTextField extends StatelessWidget {
                 : null,
             suffixIcon: suffixIcon,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: theme.colorScheme.surface,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             border: OutlineInputBorder(
@@ -71,11 +71,11 @@ class AppTextField extends StatelessWidget {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
+              borderSide: BorderSide(color: theme.dividerColor, width: 1.5),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFF6200EE), width: 2),
+              borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
@@ -87,9 +87,8 @@ class AppTextField extends StatelessWidget {
               borderSide: BorderSide(
                   color: Theme.of(context).colorScheme.error, width: 2),
             ),
-            errorStyle: TextStyle(
-              color: Theme.of(context).colorScheme.error,
-              fontSize: 12,
+            errorStyle: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.error,
               fontWeight: FontWeight.w500,
             ),
           ),
