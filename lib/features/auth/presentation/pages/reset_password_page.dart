@@ -108,10 +108,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage>
         } else if (state is PasswordUpdated) {
           AppSnackBar.showSuccess(
             context,
-            message: 'Password correctly updated! You can now sign in.',
+            message: 'Password successfully updated!',
           );
-          // Redirect to login after updating password
-          context.go(AppRoutes.login);
+          // The deep-link already authenticated the user's session, 
+          // so send them directly to Home.
+          context.go(AppRoutes.home);
         }
       },
       child: Scaffold(

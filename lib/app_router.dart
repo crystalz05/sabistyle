@@ -57,14 +57,27 @@ GoRouter createRouter(AuthBloc authBloc) {
       final isOnForgotPassword = location == AppRoutes.forgotPassword;
       final isOnResetPassword = location == AppRoutes.resetPassword;
 
+      final fromLocation = state.uri.queryParameters['from'];
+
       // Still initializing — stay on splash, regardless of target.
+      // Save the intended location as a query parameter so we don't lose deep links!
       if (authState is AuthInitial) {
-        return isOnSplash ? null : AppRoutes.splash;
+        if (!isOnSplash) {
+          final target = Uri.encodeComponent(state.uri.toString());
+          return '${AppRoutes.splash}?from=$target';
+        }
+        return null;
       }
 
       // If loading or awaiting verification, do not forcibly redirect.
       if (authState is AuthLoading || authState is AwaitingVerification) {
         return null;
+      }
+
+      // We just finished initializing (Authenticated or Unauthenticated) and we
+      // are on the Splash screen with a saved deep-link target. Restore it!
+      if (isOnSplash && fromLocation != null) {
+        return Uri.decodeComponent(fromLocation);
       }
 
       // Authenticated user trying to access auth screens → send home.
