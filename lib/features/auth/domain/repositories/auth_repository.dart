@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
+
 import '../entities/app_user.dart';
 
 /// Contract the data layer must fulfil.
@@ -6,6 +8,9 @@ abstract class AuthRepository {
   /// Stream that emits the current user on auth state changes.
   /// Emits null when logged out.
   Stream<AppUser?> get authStateChanges;
+
+  /// Raw stream of Supabase auth events (useful for capturing background deep links).
+  Stream<AuthChangeEvent> get rawAuthEvents;
 
   /// Returns the currently signed-in user, or null if none.
   AppUser? get currentUser;

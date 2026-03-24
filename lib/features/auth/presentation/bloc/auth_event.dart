@@ -8,7 +8,24 @@ abstract class AuthEvent extends Equatable {
 }
 
 /// Dispatched when the app starts — subscribes to auth state changes.
-class AppStarted extends AuthEvent {}
+class AppStarted extends AuthEvent {
+  final Uri? initialUri;
+
+  const AppStarted({this.initialUri});
+
+  @override
+  List<Object?> get props => [initialUri];
+}
+
+/// Dispatched when the app receives a deep link while already running (warm start).
+class DeepLinkReceived extends AuthEvent {
+  final Uri uri;
+  
+  const DeepLinkReceived(this.uri);
+
+  @override
+  List<Object?> get props => [uri];
+}
 
 /// Dispatched when the user submits the login form.
 class LoginRequested extends AuthEvent {

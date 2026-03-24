@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
+
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../sources/auth_remote_data_source.dart';
@@ -12,6 +14,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Stream<AppUser?> get authStateChanges => _datasource.authStateChanges;
+
+  @override
+  Stream<AuthChangeEvent> get rawAuthEvents => _datasource.rawAuthEvents;
 
   @override
   AppUser? get currentUser => _datasource.currentUser;

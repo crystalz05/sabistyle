@@ -76,8 +76,14 @@ GoRouter createRouter(AuthBloc authBloc) {
 
       // We just finished initializing (Authenticated or Unauthenticated) and we
       // are on the Splash screen with a saved deep-link target. Restore it!
-      if (isOnSplash && fromLocation != null) {
+      if (isOnSplash && fromLocation != null && authState is! PasswordResetReady) {
         return Uri.decodeComponent(fromLocation);
+      }
+
+      // If the app caught a deep link or recovery event, go straight to the reset page
+      // and do not process other authenticated/unauthenticated rules.
+      if (authState is PasswordResetReady) {
+        return isOnResetPassword ? null : AppRoutes.resetPassword;
       }
 
       // Authenticated user trying to access auth screens → send home.

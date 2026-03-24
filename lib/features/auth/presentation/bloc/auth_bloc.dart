@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -26,6 +28,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _repository;
   final LoginUseCase _loginUseCase;
   StreamSubscription<AppUser?>? _authSubscription;
+  StreamSubscription<AuthChangeEvent>? _rawAuthSubscription;
 
   AuthBloc({
     required AuthRepository repository,
@@ -39,6 +42,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LogoutRequested>(_onLogoutRequested);
     on<ResetPasswordRequested>(_onResetPasswordRequested);
     on<UpdatePasswordRequested>(_onUpdatePasswordRequested);
+    on<DeepLinkReceived>(_onDeepLinkReceived);
   }
 
   // ------------------------------------------------------------------ //
@@ -82,24 +86,55 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final initialUser = results[0] as AppUser?;
 
     // ── 3. Emit the resolved state ────────────────────────────────────────
-    if (initialUser != null) {
+    final initialUri = event.initialUri;
+    // For sabistyle://reset-password, the host is reset-password (not the path)
+    if (initialUri != null && initialUri.host == 'reset-password') {
+      debugPrint('[AuthBloc] Caught initial deep link: $initialUri');
+      emit(PasswordResetReady());
+    } else if (initialUser != null) {
       emit(Authenticated(initialUser));
     } else {
       emit(Unauthenticated());
     }
 
-    // ── 4. Keep listening for subsequent auth changes (token refresh, etc.)
+    // ── 4. Listen for background deep links (warm start) ──────────────────
+    _rawAuthSubscription?.cancel();
+    _rawAuthSubscription = _repository.rawAuthEvents.listen((authEvent) {
+      debugPrint('[AuthBloc] Raw auth event: $authEvent');
+      if (authEvent == AuthChangeEvent.passwordRecovery) {
+        debugPrint('[AuthBloc] Warm start passwordRecovery — emitting PasswordResetReady');
+        emit(PasswordResetReady());
+      }
+    });
+
+    // ── 5. Keep listening for subsequent auth changes (token refresh, etc.)
     await emit.onEach<AppUser?>(
       _repository.authStateChanges,
       onData: (user) {
+        // Guard against overriding PasswordResetReady with normal auth events
+        if (state is PasswordResetReady) return;
+
         if (user != null) {
           emit(Authenticated(user));
         } else {
           emit(Unauthenticated());
         }
       },
-      onError: (error, stack) => emit(Unauthenticated()),
+      onError: (error, stack) {
+        if (state is PasswordResetReady) return;
+        emit(Unauthenticated());
+      },
     );
+  }
+
+  void _onDeepLinkReceived(
+    DeepLinkReceived event,
+    Emitter<AuthState> emit,
+  ) {
+    debugPrint('[AuthBloc] DeepLinkReceived: ${event.uri}');
+    if (event.uri.host == 'reset-password') {
+      emit(PasswordResetReady());
+    }
   }
 
   Future<void> _onLoginRequested(
@@ -193,6 +228,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   @override
   Future<void> close() {
     _authSubscription?.cancel();
+    _rawAuthSubscription?.cancel();
     return super.close();
   }
 }

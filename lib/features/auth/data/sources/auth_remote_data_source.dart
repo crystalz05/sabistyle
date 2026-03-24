@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/error/app_exception.dart';
@@ -21,6 +22,14 @@ class AuthRemoteDatasource {
   Stream<AppUser?> get authStateChanges {
     return _client.auth.onAuthStateChange.asyncMap((event) async {
       final session = event.session;
+      final authEvent = event.event;
+
+      // Handle password recovery differently so it's not processed as a normal sign-in
+      if (authEvent == AuthChangeEvent.passwordRecovery) {
+        debugPrint('[Datasource] Explicitly ignoring passwordRecovery event');
+        return null;
+      }
+
       if (session == null || session.user.emailConfirmedAt == null) {
         return null;
       }
@@ -33,6 +42,11 @@ class AuthRemoteDatasource {
         return null;
       }
     });
+  }
+
+  /// Raw stream of Supabase auth events (useful for capturing background deep links).
+  Stream<AuthChangeEvent> get rawAuthEvents {
+    return _client.auth.onAuthStateChange.map((event) => event.event);
   }
 
   // ------------------------------------------------------------------ //

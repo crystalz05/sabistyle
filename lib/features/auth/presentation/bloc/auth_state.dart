@@ -46,4 +46,8 @@ class PasswordResetEmailSent extends AuthState {
   List<Object?> get props => [email];
 }
 
+/// Emitted when users successfully update their password.
 class PasswordUpdated extends AuthState {}
+
+/// Emitted when the app processes a password recovery deep link.
+class PasswordResetReady extends AuthState {}

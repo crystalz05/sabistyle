@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../bloc/auth_bloc.dart';
-import '../bloc/auth_event.dart';
 
 /// Pure loading screen shown on cold start while the auth state resolves.
 ///
@@ -24,10 +20,6 @@ class _SplashPageState extends State<SplashPage>
   @override
   void initState() {
     super.initState();
-
-    // Kick off the auth check — BLoC resolves the session and GoRouter
-    // will redirect automatically based on the resulting state.
-    context.read<AuthBloc>().add(AppStarted());
 
     _controller = AnimationController(
       vsync: this,
