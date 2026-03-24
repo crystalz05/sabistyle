@@ -10,24 +10,25 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class ResetPasswordPage extends StatefulWidget {
+  const ResetPasswordPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<ResetPasswordPage> createState() => _ResetPasswordPageState();
 }
 
-class _LoginPageState extends State<LoginPage>
+class _ResetPasswordPageState extends State<ResetPasswordPage>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _emailFocusNode = FocusNode();
+  final _confirmController = TextEditingController();
   final _passwordFocusNode = FocusNode();
+  final _confirmFocusNode = FocusNode();
 
   bool _obscurePassword = true;
-  bool _isEmailDirty = false;
+  bool _obscureConfirm = true;
   bool _isPasswordDirty = false;
+  bool _isConfirmDirty = false;
 
   late final AnimationController _fadeController;
   late final Animation<double> _fadeAnim;
@@ -49,15 +50,15 @@ class _LoginPageState extends State<LoginPage>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
 
-    _emailFocusNode.addListener(() {
-      if (!_emailFocusNode.hasFocus && !_isEmailDirty) {
-        setState(() => _isEmailDirty = true);
-        _formKey.currentState?.validate();
-      }
-    });
     _passwordFocusNode.addListener(() {
       if (!_passwordFocusNode.hasFocus && !_isPasswordDirty) {
         setState(() => _isPasswordDirty = true);
+        _formKey.currentState?.validate();
+      }
+    });
+    _confirmFocusNode.addListener(() {
+      if (!_confirmFocusNode.hasFocus && !_isConfirmDirty) {
+        setState(() => _isConfirmDirty = true);
         _formKey.currentState?.validate();
       }
     });
@@ -66,19 +67,11 @@ class _LoginPageState extends State<LoginPage>
   @override
   void dispose() {
     _fadeController.dispose();
-    _emailController.dispose();
     _passwordController.dispose();
-    _emailFocusNode.dispose();
+    _confirmController.dispose();
     _passwordFocusNode.dispose();
+    _confirmFocusNode.dispose();
     super.dispose();
-  }
-
-  String? _validateEmail(String? value) {
-    if (!_isEmailDirty) return null;
-    if (value == null || value.trim().isEmpty) return 'Email is required';
-    final emailRegEx = RegExp(r'^[\w\-.]+@([\w\-]+\.)+[\w\-]{2,}$');
-    if (!emailRegEx.hasMatch(value.trim())) return 'Enter a valid email address';
-    return null;
   }
 
   String? _validatePassword(String? value) {
@@ -88,17 +81,21 @@ class _LoginPageState extends State<LoginPage>
     return null;
   }
 
+  String? _validateConfirm(String? value) {
+    if (!_isConfirmDirty) return null;
+    if (value == null || value.isEmpty) return 'Confirm your password';
+    if (value != _passwordController.text) return 'Passwords do not match';
+    return null;
+  }
+
   void _submit(BuildContext context) {
     setState(() {
-      _isEmailDirty = true;
       _isPasswordDirty = true;
+      _isConfirmDirty = true;
     });
     if (_formKey.currentState?.validate() != true) return;
     context.read<AuthBloc>().add(
-          LoginRequested(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          ),
+          UpdatePasswordRequested(_passwordController.text),
         );
   }
 
@@ -108,10 +105,21 @@ class _LoginPageState extends State<LoginPage>
       listener: (context, state) {
         if (state is AuthError) {
           AppSnackBar.showError(context, message: state.message);
+        } else if (state is PasswordUpdated) {
+          AppSnackBar.showSuccess(
+            context,
+            message: 'Password correctly updated! You can now sign in.',
+          );
+          // Redirect to login after updating password
+          context.go(AppRoutes.login);
         }
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F7FB),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
         body: SafeArea(
           child: FadeTransition(
             opacity: _fadeAnim,
@@ -122,16 +130,12 @@ class _LoginPageState extends State<LoginPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 56),
+                    const SizedBox(height: 16),
                     _buildHeader(),
                     const SizedBox(height: 40),
                     _buildForm(context),
                     const SizedBox(height: 28),
                     _buildSubmitButton(context),
-                    const SizedBox(height: 24),
-                    _buildDivider(),
-                    const SizedBox(height: 24),
-                    _buildSignUpRow(context),
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -162,26 +166,16 @@ class _LoginPageState extends State<LoginPage>
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Icon(
-                Icons.shopping_bag_rounded,
+                Icons.password_rounded,
                 color: Colors.white,
                 size: 30,
-              ),
-            ),
-            const SizedBox(width: 14),
-            const Text(
-              "Sabistyle",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF6200EE),
-                letterSpacing: -0.8,
               ),
             ),
           ],
         ),
         const SizedBox(height: 28),
         const Text(
-          'Welcome back',
+          'Create new password',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
@@ -191,11 +185,12 @@ class _LoginPageState extends State<LoginPage>
         ),
         const SizedBox(height: 6),
         Text(
-          'Sign in to continue shopping',
+          "Your new password must be different from previous used passwords.",
           style: TextStyle(
             fontSize: 15,
             color: Colors.grey.shade500,
             fontWeight: FontWeight.w400,
+            height: 1.4,
           ),
         ),
       ],
@@ -210,38 +205,19 @@ class _LoginPageState extends State<LoginPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AppTextField(
-            label: 'Email address',
-            controller: _emailController,
-            focusNode: _emailFocusNode,
-            validator: _validateEmail,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-            onChanged: (_) {
-              if (_isEmailDirty) _formKey.currentState?.validate();
-            },
-            onFieldSubmitted: (_) {
-              _isEmailDirty = true;
-              _formKey.currentState?.validate();
-              _passwordFocusNode.requestFocus();
-            },
-            hintText: 'you@example.com',
-            prefixIcon: Icons.mail_outline_rounded,
-          ),
-          const SizedBox(height: 20),
-          AppTextField(
-            label: 'Password',
+            label: 'New Password',
             controller: _passwordController,
             focusNode: _passwordFocusNode,
             validator: _validatePassword,
             obscureText: _obscurePassword,
-            textInputAction: TextInputAction.done,
+            textInputAction: TextInputAction.next,
             onChanged: (_) {
               if (_isPasswordDirty) _formKey.currentState?.validate();
             },
             onFieldSubmitted: (_) {
               _isPasswordDirty = true;
               _formKey.currentState?.validate();
-              _submit(context);
+              _confirmFocusNode.requestFocus();
             },
             hintText: '••••••••',
             prefixIcon: Icons.lock_outline_rounded,
@@ -257,21 +233,34 @@ class _LoginPageState extends State<LoginPage>
                   setState(() => _obscurePassword = !_obscurePassword),
             ),
           ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => context.push(AppRoutes.forgotPassword),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF6200EE),
-                padding: EdgeInsets.zero,
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          const SizedBox(height: 20),
+          AppTextField(
+            label: 'Confirm New Password',
+            controller: _confirmController,
+            focusNode: _confirmFocusNode,
+            validator: _validateConfirm,
+            obscureText: _obscureConfirm,
+            textInputAction: TextInputAction.done,
+            onChanged: (_) {
+              if (_isConfirmDirty) _formKey.currentState?.validate();
+            },
+            onFieldSubmitted: (_) {
+              _isConfirmDirty = true;
+              _formKey.currentState?.validate();
+              _submit(context);
+            },
+            hintText: '••••••••',
+            prefixIcon: Icons.lock_outline_rounded,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureConfirm
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: Colors.grey.shade500,
+                size: 20,
               ),
-              child: const Text(
-                'Forgot password?',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              ),
+              onPressed: () =>
+                  setState(() => _obscureConfirm = !_obscureConfirm),
             ),
           ),
         ],
@@ -284,57 +273,11 @@ class _LoginPageState extends State<LoginPage>
       builder: (context, state) {
         final isLoading = state is AuthLoading;
         return AppButton(
-          text: 'Sign In',
+          text: 'Update Password',
           onPressed: () => _submit(context),
           isLoading: isLoading,
         );
       },
-    );
-  }
-
-  Widget _buildDivider() {
-    return Row(
-      children: [
-        Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            'OR',
-            style: TextStyle(
-              color: Colors.grey.shade400,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.2,
-            ),
-          ),
-        ),
-        Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
-      ],
-    );
-  }
-
-  Widget _buildSignUpRow(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          "Don't have an account?",
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-        ),
-        TextButton(
-          onPressed: () => context.go(AppRoutes.signup),
-          style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFF6200EE),
-            padding: const EdgeInsets.only(left: 4),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          child: const Text(
-            'Sign Up',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-          ),
-        ),
-      ],
     );
   }
 }

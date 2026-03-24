@@ -30,4 +30,7 @@ abstract class AuthRepository {
 
   /// Sends a password-reset email via Supabase.
   Future<void> resetPassword({required String email});
+
+  /// Updates the user's password using an active session (e.g. after reset link).
+  Future<void> updatePassword({required String newPassword});
 }

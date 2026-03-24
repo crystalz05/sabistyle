@@ -37,3 +37,13 @@ class AuthError extends AuthState {
   @override
   List<Object?> get props => [message];
 }
+
+class PasswordResetEmailSent extends AuthState {
+  final String email;
+  const PasswordResetEmailSent(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
+class PasswordUpdated extends AuthState {}

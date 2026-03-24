@@ -37,6 +37,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginRequested>(_onLoginRequested);
     on<SignUpRequested>(_onSignUpRequested);
     on<LogoutRequested>(_onLogoutRequested);
+    on<ResetPasswordRequested>(_onResetPasswordRequested);
+    on<UpdatePasswordRequested>(_onUpdatePasswordRequested);
   }
 
   // ------------------------------------------------------------------ //
@@ -155,6 +157,36 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthError(e.message));
     } catch (_) {
       emit(const AuthError('Sign out failed. Please try again.'));
+    }
+  }
+
+  Future<void> _onResetPasswordRequested(
+    ResetPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _repository.resetPassword(email: event.email);
+      emit(PasswordResetEmailSent(event.email));
+    } on AppException catch (e) {
+      emit(AuthError(e.message));
+    } catch (_) {
+      emit(const AuthError('Could not send reset email. Please try again.'));
+    }
+  }
+
+  Future<void> _onUpdatePasswordRequested(
+    UpdatePasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _repository.updatePassword(newPassword: event.newPassword);
+      emit(PasswordUpdated());
+    } on AppException catch (e) {
+      emit(AuthError(e.message));
+    } catch (_) {
+      emit(const AuthError('Could not update password. Please try again.'));
     }
   }
 

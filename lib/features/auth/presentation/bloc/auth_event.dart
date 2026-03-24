@@ -39,3 +39,23 @@ class SignUpRequested extends AuthEvent {
 
 /// Dispatched when the user taps "Log out".
 class LogoutRequested extends AuthEvent {}
+
+/// Dispatched when the user requests a password reset link.
+class ResetPasswordRequested extends AuthEvent {
+  final String email;
+
+  const ResetPasswordRequested(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
+/// Dispatched when the user submits a new password after clicking the reset link.
+class UpdatePasswordRequested extends AuthEvent {
+  final String newPassword;
+
+  const UpdatePasswordRequested(this.newPassword);
+
+  @override
+  List<Object?> get props => [newPassword];
+}

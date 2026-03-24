@@ -6,8 +6,10 @@ import 'package:get_it/get_it.dart';
 import 'core/router/router_refresh_listenable.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth_state.dart';
+import 'features/auth/presentation/pages/forgot_password_page.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/onboarding_page.dart';
+import 'features/auth/presentation/pages/reset_password_page.dart';
 import 'features/auth/presentation/pages/signup_page.dart';
 import 'features/auth/presentation/pages/splash_page.dart';
 import 'features/auth/presentation/pages/verify_email_page.dart';
@@ -23,6 +25,8 @@ abstract final class AppRoutes {
   static const signup = '/signup';
   static const login = '/login';
   static const verifyEmail = '/verify-email';
+  static const forgotPassword = '/forgot-password';
+  static const resetPassword = '/reset-password';
   static const home = '/home';
 }
 
@@ -50,6 +54,8 @@ GoRouter createRouter(AuthBloc authBloc) {
       final isOnLogin = location == AppRoutes.login;
       final isOnSignup = location == AppRoutes.signup;
       final isOnOnboarding = location == AppRoutes.onboarding;
+      final isOnForgotPassword = location == AppRoutes.forgotPassword;
+      final isOnResetPassword = location == AppRoutes.resetPassword;
 
       // Still initializing — stay on splash, regardless of target.
       if (authState is AuthInitial) {
@@ -61,8 +67,9 @@ GoRouter createRouter(AuthBloc authBloc) {
         return null;
       }
 
-      // Authenticated user trying to access splash, login, signup, onboarding, or verify → send home.
-      if (isAuthenticated && (isOnSplash || isOnLogin || isOnSignup || isOnOnboarding)) {
+      // Authenticated user trying to access auth screens → send home.
+      // (We don't block access to /reset-password because they need it to update their passed after deep linking)
+      if (isAuthenticated && (isOnSplash || isOnLogin || isOnSignup || isOnOnboarding || isOnForgotPassword)) {
         return AppRoutes.home;
       }
 
@@ -84,7 +91,7 @@ GoRouter createRouter(AuthBloc authBloc) {
       }
 
       // 4. Unauthenticated user trying to access a protected route
-      if (!isAuthenticated && !isOnSplash && !isOnLogin && !isOnSignup && !isOnOnboarding) {
+      if (!isAuthenticated && !isOnSplash && !isOnLogin && !isOnSignup && !isOnOnboarding && !isOnForgotPassword && !isOnResetPassword) {
         return AppRoutes.login;
       }
 
@@ -115,6 +122,14 @@ GoRouter createRouter(AuthBloc authBloc) {
           final email = state.uri.queryParameters['email'] ?? '';
           return VerifyEmailPage(email: email);
         },
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.resetPassword,
+        builder: (context, state) => const ResetPasswordPage(),
       ),
       GoRoute(
         path: AppRoutes.home,

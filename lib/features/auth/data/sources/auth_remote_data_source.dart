@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/error/app_exception.dart';
+import '../../../../core/error/error_mapper.dart';
 import '../../domain/entities/app_user.dart';
 
 /// Only class allowed to import supabase_flutter in the auth feature.
@@ -81,12 +82,8 @@ class AuthRemoteDatasource {
         email: user.email ?? email,
         fullName: fullName,
       );
-    } on AppException {
-      rethrow;
-    } on AuthException catch (e) {
-      throw AppException(_mapAuthError(e.message), code: e.statusCode);
     } catch (e) {
-      throw AppException('Sign up failed. Please try again.');
+      throw ErrorMapper.fromError(e);
     }
   }
 
@@ -113,12 +110,8 @@ class AuthRemoteDatasource {
       }
 
       return await _fetchAppUser(user.id, user.email ?? email);
-    } on AppException {
-      rethrow;
-    } on AuthException catch (e) {
-      throw AppException(_mapAuthError(e.message), code: e.statusCode);
     } catch (e) {
-      throw AppException('Sign in failed. Please try again.');
+      throw ErrorMapper.fromError(e);
     }
   }
 
@@ -129,10 +122,8 @@ class AuthRemoteDatasource {
   Future<void> signOut() async {
     try {
       await _client.auth.signOut();
-    } on AuthException catch (e) {
-      throw AppException(e.message, code: e.statusCode);
     } catch (e) {
-      throw AppException('Sign out failed.');
+      throw ErrorMapper.fromError(e);
     }
   }
 
@@ -142,11 +133,23 @@ class AuthRemoteDatasource {
 
   Future<void> resetPassword({required String email}) async {
     try {
-      await _client.auth.resetPasswordForEmail(email);
-    } on AuthException catch (e) {
-      throw AppException(_mapAuthError(e.message), code: e.statusCode);
+      await _client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'sabistyle://reset-password',
+      );
     } catch (e) {
-      throw AppException('Could not send reset email. Please try again.');
+      throw ErrorMapper.fromError(e);
+    }
+  }
+
+  /// Updates the user's password.
+  /// Must be called after the user has clicked the reset password link and
+  /// their session is active.
+  Future<void> updatePassword({required String newPassword}) async {
+    try {
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+    } catch (e) {
+      throw ErrorMapper.fromError(e);
     }
   }
 
@@ -192,26 +195,5 @@ class AuthRemoteDatasource {
       // is not invalidated on a flaky connection.
       return AppUser(id: userId, email: email, fullName: '');
     }
-  }
-
-  /// Maps Supabase auth error strings to user-friendly messages.
-  String _mapAuthError(String raw) {
-    final msg = raw.toLowerCase();
-    if (msg.contains('invalid login credentials')) {
-      return 'Incorrect email or password.';
-    }
-    if (msg.contains('email not confirmed')) {
-      return 'Please verify your email before signing in.';
-    }
-    if (msg.contains('user already registered')) {
-      return 'An account with this email already exists.';
-    }
-    if (msg.contains('password should be at least')) {
-      return 'Password must be at least 6 characters.';
-    }
-    if (msg.contains('rate limit')) {
-      return 'Too many attempts. Please wait a moment and try again.';
-    }
-    return raw; // fallback to raw Supabase message
   }
 }
