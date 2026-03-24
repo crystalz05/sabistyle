@@ -14,6 +14,7 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       width: double.infinity,
@@ -25,8 +26,8 @@ class AppButton extends StatelessWidget {
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               )
-            : const LinearGradient(
-                colors: [Color(0xFF7C3AED), Color(0xFF6200EE)],
+            : LinearGradient(
+                colors: [theme.colorScheme.secondary, theme.colorScheme.primary],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
@@ -35,7 +36,7 @@ class AppButton extends StatelessWidget {
             ? []
             : [
                 BoxShadow(
-                  color: const Color(0xFF6200EE).withAlpha(80),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -48,19 +49,18 @@ class AppButton extends StatelessWidget {
           onTap: isLoading ? null : onPressed,
           child: Center(
             child: isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
                     ),
                   )
                 : Text(
                     text,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.onPrimary,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.3,
                     ),

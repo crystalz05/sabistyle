@@ -104,6 +104,8 @@ class _LoginPageState extends State<LoginPage>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
@@ -111,7 +113,7 @@ class _LoginPageState extends State<LoginPage>
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF7F7FB),
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: SafeArea(
           child: FadeTransition(
             opacity: _fadeAnim,
@@ -123,13 +125,13 @@ class _LoginPageState extends State<LoginPage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 56),
-                    _buildHeader(),
+                    _buildHeader(context),
                     const SizedBox(height: 40),
                     _buildForm(context),
                     const SizedBox(height: 28),
                     _buildSubmitButton(context),
                     const SizedBox(height: 24),
-                    _buildDivider(),
+                    _buildDivider(context),
                     const SizedBox(height: 24),
                     _buildSignUpRow(context),
                     const SizedBox(height: 32),
@@ -143,7 +145,8 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -154,48 +157,44 @@ class _LoginPageState extends State<LoginPage>
               width: 54,
               height: 54,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFF6200EE)],
+                gradient: LinearGradient(
+                  colors: [theme.colorScheme.secondary, theme.colorScheme.primary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.shopping_bag_rounded,
-                color: Colors.white,
+                color: theme.colorScheme.onPrimary,
                 size: 30,
               ),
             ),
             const SizedBox(width: 14),
-            const Text(
+            Text(
               "Sabistyle",
-              style: TextStyle(
-                fontSize: 24,
+              style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF6200EE),
+                color: theme.colorScheme.primary,
                 letterSpacing: -0.8,
               ),
             ),
           ],
         ),
         const SizedBox(height: 28),
-        const Text(
+        Text(
           'Welcome back',
-          style: TextStyle(
-            fontSize: 28,
+          style: theme.textTheme.displaySmall?.copyWith(
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1A1A2E),
+            color: theme.colorScheme.onSurface,
             letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 6),
         Text(
           'Sign in to continue shopping',
-          style: TextStyle(
-            fontSize: 15,
+          style: theme.textTheme.bodyLarge?.copyWith(
             color: Colors.grey.shade500,
-            fontWeight: FontWeight.w400,
           ),
         ),
       ],
@@ -203,6 +202,7 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Widget _buildForm(BuildContext context) {
+    final theme = Theme.of(context);
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.disabled,
@@ -263,14 +263,14 @@ class _LoginPageState extends State<LoginPage>
             child: TextButton(
               onPressed: () => context.push(AppRoutes.forgotPassword),
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF6200EE),
+                foregroundColor: theme.colorScheme.primary,
                 padding: EdgeInsets.zero,
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              child: const Text(
+              child: Text(
                 'Forgot password?',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                style: theme.textTheme.labelMedium,
               ),
             ),
           ),
@@ -292,46 +292,47 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildDivider(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       children: [
-        Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+        Expanded(child: Divider(color: theme.dividerColor, thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             'OR',
-            style: TextStyle(
+            style: theme.textTheme.labelSmall?.copyWith(
               color: Colors.grey.shade400,
-              fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.2,
             ),
           ),
         ),
-        Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+        Expanded(child: Divider(color: theme.dividerColor, thickness: 1)),
       ],
     );
   }
 
   Widget _buildSignUpRow(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           "Don't have an account?",
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+          style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
         ),
         TextButton(
           onPressed: () => context.go(AppRoutes.signup),
           style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFF6200EE),
+            foregroundColor: theme.colorScheme.primary,
             padding: const EdgeInsets.only(left: 4),
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: const Text(
+          child: Text(
             'Sign Up',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+            style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
       ],

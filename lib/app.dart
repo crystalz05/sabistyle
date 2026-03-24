@@ -64,6 +64,8 @@ class _MyAppState extends State<MyApp> {
         title: 'SabiStyle',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
         routerConfig: _router,
       ),
     );

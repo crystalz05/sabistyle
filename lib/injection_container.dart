@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'features/auth/auth_injection.dart';
+import 'features/home/home_injection.dart';
 
 final sl = GetIt.instance;
 
@@ -24,6 +25,6 @@ Future<void> init(SharedPreferences sharedPreferences) async {
 
   // ── Features ─────────────────────────────────────────────────────────────
   registerAuthDependencies(sl);
+  registerHomeDependencies(sl);
   // registerProductDependencies(sl);   ← add future features here
-  // registerOrderDependencies(sl);
 }

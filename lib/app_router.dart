@@ -14,6 +14,11 @@ import 'features/auth/presentation/pages/signup_page.dart';
 import 'features/auth/presentation/pages/splash_page.dart';
 import 'features/auth/presentation/pages/verify_email_page.dart';
 import 'features/home/presentation/pages/home_page.dart';
+import 'features/home/presentation/widgets/main_navigation_shell.dart';
+import 'features/market/presentation/pages/market_page.dart';
+import 'features/orders/presentation/pages/orders_page.dart';
+import 'features/profile/presentation/pages/profile_page.dart';
+import 'features/wishlist/presentation/pages/wishlist_page.dart';
 
 // ─────────────────────────────────────────────────────────────
 // Route name constants — use these for named navigation so
@@ -28,6 +33,10 @@ abstract final class AppRoutes {
   static const forgotPassword = '/forgot-password';
   static const resetPassword = '/reset-password';
   static const home = '/home';
+  static const market = '/home/market';
+  static const wishlist = '/home/wishlist';
+  static const orders = '/home/orders';
+  static const profile = '/home/profile';
 }
 
 /// Creates a [GoRouter] instance wired to [AuthBloc].
@@ -150,9 +159,52 @@ GoRouter createRouter(AuthBloc authBloc) {
         path: AppRoutes.resetPassword,
         builder: (context, state) => const ResetPasswordPage(),
       ),
-      GoRoute(
-        path: AppRoutes.home,
-        builder: (context, state) => const HomePage(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return MainNavigationShell(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (context, state) => const HomePage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.market,
+                builder: (context, state) => const MarketPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.wishlist,
+                builder: (context, state) => const WishlistPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.orders,
+                builder: (context, state) => const OrdersPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.profile,
+                builder: (context, state) => const ProfilePage(),
+              ),
+            ],
+          ),
+        ],
       ),
     ],
 

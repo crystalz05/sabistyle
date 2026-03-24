@@ -32,8 +32,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7FB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Stack(
           children: [
@@ -42,16 +44,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
               onPageChanged: (idx) => setState(() => _currentPage = idx),
               children: [
                 _buildSlide(
+                  context: context,
                   hook: 'Your Style. Proudly Nigerian.',
                   sub: 'Discover fashion from local designers and vendors — delivered to your door.',
                   icon: Icons.checkroom_rounded,
                 ),
                 _buildSlide(
+                  context: context,
                   hook: 'Shop. Pay. Receive. Simple.',
                   sub: 'Browse hundreds of styles, pay securely with Paystack, and track your delivery in real time.',
                   icon: Icons.local_shipping_rounded,
                 ),
                 _buildSlide(
+                  context: context,
                   hook: 'Find Your Fit Today',
                   sub: 'New arrivals daily. Free returns on your first order.',
                   icon: Icons.star_rounded,
@@ -65,9 +70,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
               child: TextButton(
                 onPressed: _finishOnboarding,
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF6200EE),
+                  foregroundColor: theme.colorScheme.primary,
                 ),
-                child: const Text('Skip', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                child: Text('Skip', style: theme.textTheme.labelLarge),
               ),
             ),
             Positioned(
@@ -78,7 +83,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(3, (index) => _buildDot(index)),
+                    children: List.generate(3, (index) => _buildDot(context, index)),
                   ),
                   const SizedBox(height: 32),
                   if (_currentPage == 2)
@@ -105,7 +110,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  Widget _buildSlide({required String hook, required String sub, required IconData icon, bool isLast = false}) {
+  Widget _buildSlide({
+    required BuildContext context,
+    required String hook, 
+    required String sub, 
+    required IconData icon, 
+    bool isLast = false
+  }) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -115,34 +127,40 @@ class _OnboardingPageState extends State<OnboardingPage> {
             height: 280,
             width: double.infinity,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF7C3AED), Color(0xFF6200EE)],
+              gradient: LinearGradient(
+                colors: [theme.colorScheme.secondary, theme.colorScheme.primary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF6200EE).withAlpha(60),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.25),
                   blurRadius: 24,
                   offset: const Offset(0, 12),
                 ),
               ],
             ),
             child: Center(
-              child: Icon(icon, size: 100, color: Colors.white),
+              child: Icon(icon, size: 100, color: theme.colorScheme.onPrimary),
             ),
           ),
           const SizedBox(height: 48),
           Text(
             hook,
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Color(0xFF1A1A2E), height: 1.2),
+            style: theme.textTheme.displayLarge?.copyWith(
+              height: 1.2,
+              color: theme.colorScheme.onSurface,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           Text(
             sub,
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600, height: 1.5),
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: Colors.grey.shade600,
+              height: 1.5,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 80), // Space for bottom controls
@@ -151,14 +169,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  Widget _buildDot(int index) {
+  Widget _buildDot(BuildContext context, int index) {
+    final theme = Theme.of(context);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       margin: const EdgeInsets.symmetric(horizontal: 4),
       height: 8,
       width: _currentPage == index ? 24 : 8,
       decoration: BoxDecoration(
-        color: _currentPage == index ? const Color(0xFF6200EE) : Colors.grey.shade300,
+        color: _currentPage == index ? theme.colorScheme.primary : Colors.grey.shade300,
         borderRadius: BorderRadius.circular(4),
       ),
     );
