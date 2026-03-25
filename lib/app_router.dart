@@ -44,6 +44,7 @@ abstract final class AppRoutes {
   static const productListing = '/home/market/:categoryId';
   static const productDetail = '/home/market/product/:productId';
   static const search = '/home/market/search';
+  static const homeSearch = '/home/search';
   static const wishlist = '/home/wishlist';
   static const orders = '/home/orders';
   static const profile = '/home/profile';
@@ -179,6 +180,15 @@ GoRouter createRouter(AuthBloc authBloc) {
               GoRoute(
                 path: AppRoutes.home,
                 builder: (context, state) => const HomePage(),
+                routes: [
+                  GoRoute(
+                    path: 'search',
+                    builder: (context, state) => BlocProvider(
+                      create: (context) => GetIt.I<SearchBloc>(),
+                      child: const SearchPage(),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

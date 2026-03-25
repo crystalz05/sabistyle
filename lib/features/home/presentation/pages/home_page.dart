@@ -65,7 +65,7 @@ class _HomePageState extends State<HomePage> {
       actions: [
         IconButton(
           icon: Icon(Icons.search_rounded, color: theme.colorScheme.onSurface),
-          onPressed: () {},
+          onPressed: () => context.push('/home/search'),
         ),
         Stack(
           alignment: Alignment.center,
