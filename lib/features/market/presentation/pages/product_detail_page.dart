@@ -160,8 +160,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 ),
                                 _QuantitySelector(
                                   quantity: _quantity,
-                                  onIncrement: () =>
-                                      setState(() => _quantity++),
+                                  onIncrement: () {
+                                    if (_quantity < product.stockQty){
+                                      setState(() => _quantity++);
+                                    }
+                                  },
                                   onDecrement: () {
                                     if (_quantity > 1) {
                                       setState(() => _quantity--);
