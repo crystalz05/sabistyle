@@ -19,6 +19,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
+    context.read<SearchBloc>().add(LoadSearchHistory());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
@@ -31,22 +32,36 @@ class _SearchPageState extends State<SearchPage> {
     super.dispose();
   }
 
+  void _onSearch(String query) {
+    if (query.trim().isNotEmpty) {
+      context.read<SearchBloc>().add(SearchQueryChanged(query));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        surfaceTintColor: colorScheme.surface,
         title: TextField(
           controller: _searchController,
           focusNode: _focusNode,
-          onChanged: (query) => context.read<SearchBloc>().add(SearchQueryChanged(query)),
+          onChanged: _onSearch,
+          onSubmitted: (query) {
+            if (query.trim().isNotEmpty) {
+              context.read<SearchBloc>().add(AddToSearchHistory(query));
+            }
+          },
           decoration: InputDecoration(
             hintText: 'Search products...',
             border: InputBorder.none,
+            focusedBorder: InputBorder.none,
             hintStyle: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              color: colorScheme.onSurface.withValues(alpha: 0.4),
             ),
           ),
           style: theme.textTheme.bodyLarge,
@@ -90,10 +105,64 @@ class _SearchPageState extends State<SearchPage> {
               message: 'No products found matching your search.',
             );
           } else if (state is SearchInitial) {
-            return const AppEmptyState(
-              icon: Icons.search_rounded,
-              title: 'Browse',
-              message: 'Start typing to find products.',
+            if (state.history.isEmpty) {
+              return const AppEmptyState(
+                icon: Icons.search_rounded,
+                title: 'Browse',
+                message: 'Start typing to find products.',
+              );
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                  child: Text(
+                    'RECENT SEARCHES',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: state.history.length,
+                    separatorBuilder: (context, index) => Divider(
+                      height: 1,
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    ),
+                    itemBuilder: (context, index) {
+                      final term = state.history[index];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          Icons.history_rounded,
+                          size: 20,
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                        ),
+                        title: Text(
+                          term,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        trailing: Icon(
+                          Icons.north_west_rounded,
+                          size: 18,
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                        ),
+                        onTap: () {
+                          _searchController.text = term;
+                          _onSearch(term);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
             );
           } else if (state is SearchError) {
             return Center(child: Text(state.message));

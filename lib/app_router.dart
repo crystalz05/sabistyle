@@ -186,27 +186,18 @@ GoRouter createRouter(AuthBloc authBloc) {
             routes: [
               GoRoute(
                 path: AppRoutes.market,
-                builder: (context, state) => MultiBlocProvider(
-                  providers: [
-                    BlocProvider(create: (context) => GetIt.I<ProductBloc>()),
-                    BlocProvider(create: (context) => GetIt.I<SearchBloc>()),
-                  ],
+                builder: (context, state) => BlocProvider(
+                  create: (context) => GetIt.I<ProductBloc>(),
                   child: const MarketPage(),
                 ),
                 routes: [
+                  // Literal routes MUST come before wildcard :categoryId
                   GoRoute(
-                    path: ':categoryId',
-                    builder: (context, state) {
-                      final categoryId = state.pathParameters['categoryId']!;
-                      final categoryName = state.uri.queryParameters['name'] ?? 'Products';
-                      return BlocProvider(
-                        create: (context) => GetIt.I<ProductBloc>(),
-                        child: ProductListingPage(
-                          categoryId: categoryId,
-                          categoryName: categoryName,
-                        ),
-                      );
-                    },
+                    path: 'search',
+                    builder: (context, state) => BlocProvider(
+                      create: (context) => GetIt.I<SearchBloc>(),
+                      child: const SearchPage(),
+                    ),
                   ),
                   GoRoute(
                     path: 'product/:productId',
@@ -222,11 +213,18 @@ GoRouter createRouter(AuthBloc authBloc) {
                     },
                   ),
                   GoRoute(
-                    path: 'search',
-                    builder: (context, state) => BlocProvider(
-                      create: (context) => GetIt.I<SearchBloc>(),
-                      child: const SearchPage(),
-                    ),
+                    path: ':categoryId',
+                    builder: (context, state) {
+                      final categoryId = state.pathParameters['categoryId']!;
+                      final categoryName = state.uri.queryParameters['name'] ?? 'Products';
+                      return BlocProvider(
+                        create: (context) => GetIt.I<ProductBloc>(),
+                        child: ProductListingPage(
+                          categoryId: categoryId,
+                          categoryName: categoryName,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

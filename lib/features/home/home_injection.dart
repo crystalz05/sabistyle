@@ -9,6 +9,7 @@ import 'data/repositories/review_repository_impl.dart';
 import 'data/sources/home_remote_data_source.dart';
 import 'data/sources/product_remote_data_source.dart';
 import 'data/sources/review_remote_data_source.dart';
+import 'data/sources/search_history_local_data_source.dart';
 import 'domain/repositories/home_repository.dart';
 import 'domain/repositories/product_repository.dart';
 import 'domain/repositories/review_repository.dart';
@@ -25,13 +26,19 @@ void registerHomeDependencies(GetIt sl) {
   sl.registerLazySingleton<ReviewRemoteDataSource>(
     () => ReviewRemoteDataSourceImpl(client: sl()),
   );
+  sl.registerLazySingleton<SearchHistoryLocalDataSource>(
+    () => SearchHistoryLocalDataSourceImpl(sharedPreferences: sl()),
+  );
 
   // Repositories
   sl.registerLazySingleton<HomeRepository>(
     () => HomeRepositoryImpl(remoteDataSource: sl()),
   );
   sl.registerLazySingleton<ProductRepository>(
-    () => ProductRepositoryImpl(remoteDataSource: sl()),
+    () => ProductRepositoryImpl(
+      remoteDataSource: sl(),
+      historyLocalDataSource: sl(),
+    ),
   );
   sl.registerLazySingleton<ReviewRepository>(
     () => ReviewRepositoryImpl(remoteDataSource: sl()),

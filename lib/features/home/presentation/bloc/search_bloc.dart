@@ -18,6 +18,15 @@ class SearchQueryChanged extends SearchEvent {
   List<Object?> get props => [query];
 }
 
+class LoadSearchHistory extends SearchEvent {}
+
+class AddToSearchHistory extends SearchEvent {
+  final String query;
+  const AddToSearchHistory(this.query);
+  @override
+  List<Object?> get props => [query];
+}
+
 class ClearSearch extends SearchEvent {}
 
 // States
@@ -27,15 +36,24 @@ abstract class SearchState extends Equatable {
   List<Object?> get props => [];
 }
 
-class SearchInitial extends SearchState {}
+class SearchInitial extends SearchState {
+  final List<String> history;
+  const SearchInitial({this.history = const []});
+  @override
+  List<Object?> get props => [history];
+}
+
 class SearchLoading extends SearchState {}
+
 class SearchResultsLoaded extends SearchState {
   final List<Product> results;
   const SearchResultsLoaded(this.results);
   @override
   List<Object?> get props => [results];
 }
+
 class SearchEmpty extends SearchState {}
+
 class SearchError extends SearchState {
   final String message;
   const SearchError(this.message);
@@ -49,7 +67,9 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
   SearchBloc({required ProductRepository repository})
       : _repository = repository,
-        super(SearchInitial()) {
+        super(const SearchInitial()) {
+    on<LoadSearchHistory>(_onLoadSearchHistory);
+    on<AddToSearchHistory>(_onAddToSearchHistory);
     on<SearchQueryChanged>(
       _onSearchQueryChanged,
       transformer: (events, mapper) => events
@@ -59,12 +79,43 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     on<ClearSearch>(_onClearSearch);
   }
 
+  Future<void> _onLoadSearchHistory(
+    LoadSearchHistory event,
+    Emitter<SearchState> emit,
+  ) async {
+    try {
+      final history = await _repository.getSearchHistory();
+      emit(SearchInitial(history: history));
+    } catch (e) {
+      emit(SearchError(e.toString()));
+    }
+  }
+
+  Future<void> _onAddToSearchHistory(
+    AddToSearchHistory event,
+    Emitter<SearchState> emit,
+  ) async {
+    try {
+      await _repository.saveSearchQuery(event.query);
+      final history = await _repository.getSearchHistory();
+      emit(SearchInitial(history: history));
+    } catch (e) {
+      emit(SearchError(e.toString()));
+    }
+  }
+
   Future<void> _onSearchQueryChanged(
     SearchQueryChanged event,
     Emitter<SearchState> emit,
   ) async {
-    if (event.query.isEmpty) {
-      emit(SearchInitial());
+    if (event.query.trim().isEmpty) {
+      // Load history inline instead of dispatching a nested event
+      try {
+        final history = await _repository.getSearchHistory();
+        emit(SearchInitial(history: history));
+      } catch (e) {
+        emit(SearchInitial());
+      }
       return;
     }
 
@@ -74,6 +125,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       if (results.isEmpty) {
         emit(SearchEmpty());
       } else {
+        // Save history on successful search
+        await _repository.saveSearchQuery(event.query);
         emit(SearchResultsLoaded(results));
       }
     } catch (e) {
@@ -81,7 +134,12 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     }
   }
 
-  void _onClearSearch(ClearSearch event, Emitter<SearchState> emit) {
-    emit(SearchInitial());
+  Future<void> _onClearSearch(ClearSearch event, Emitter<SearchState> emit) async {
+    try {
+      final history = await _repository.getSearchHistory();
+      emit(SearchInitial(history: history));
+    } catch (e) {
+      emit(SearchInitial());
+    }
   }
 }

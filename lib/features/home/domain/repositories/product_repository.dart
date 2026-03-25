@@ -16,4 +16,8 @@ abstract class ProductRepository {
 
   /// Fetches new arrival products
   Future<List<Product>> getNewArrivals();
+
+  /// Search history methods
+  Future<List<String>> getSearchHistory();
+  Future<void> saveSearchQuery(String query);
 }
