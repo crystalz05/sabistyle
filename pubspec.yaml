@@ -23,6 +23,9 @@ dependencies:
 
   supabase_flutter: ^2.8.0
   app_links: ^7.0.0
+  rxdart: ^0.28.0
+  cached_network_image: ^3.4.1
+  connectivity_plus: ^7.0.0
 
 
 dev_dependencies:

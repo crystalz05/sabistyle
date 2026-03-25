@@ -10,6 +10,8 @@ class Product extends Equatable {
   final List<String> sizes;
   final List<String> colors;
   final int stockQty;
+  final double avgRating;
+  final int reviewCount;
   final bool isFeatured;
   final bool isActive;
   final DateTime? createdAt;
@@ -24,6 +26,8 @@ class Product extends Equatable {
     required this.sizes,
     required this.colors,
     required this.stockQty,
+    this.avgRating = 0.0,
+    this.reviewCount = 0,
     required this.isFeatured,
     required this.isActive,
     this.createdAt,
@@ -40,6 +44,8 @@ class Product extends Equatable {
         sizes,
         colors,
         stockQty,
+        avgRating,
+        reviewCount,
         isFeatured,
         isActive,
         createdAt,

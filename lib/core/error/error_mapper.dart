@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app_exception.dart';
+// ignore: depend_on_referenced_packages
+import 'package:postgrest/postgrest.dart';
 
 class ErrorMapper {
   static AppException fromError(Object error) {
@@ -24,6 +26,16 @@ class ErrorMapper {
 
     if (errorString.contains('timeout')) {
       return const AppException('The request timed out. Please try again.');
+    }
+
+    // Handle Supabase database / PostgREST errors
+    if (error is PostgrestException) {
+      return AppException(
+        error.message.isNotEmpty
+            ? error.message
+            : 'A database error occurred. Please try again.',
+        code: error.code,
+      );
     }
 
     // Now handle generic Supabase auth API errors
