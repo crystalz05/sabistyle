@@ -35,4 +35,22 @@ class ProductRepositoryImpl implements ProductRepository {
       throw ErrorMapper.fromError(e);
     }
   }
+
+  @override
+  Future<List<Product>> getFeaturedProducts() async {
+    try {
+      return await _remoteDataSource.getFeaturedProducts();
+    } catch (e) {
+      throw ErrorMapper.fromError(e);
+    }
+  }
+
+  @override
+  Future<List<Product>> getNewArrivals() async {
+    try {
+      return await _remoteDataSource.getNewArrivals();
+    } catch (e) {
+      throw ErrorMapper.fromError(e);
+    }
+  }
 }

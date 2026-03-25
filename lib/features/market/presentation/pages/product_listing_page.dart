@@ -23,7 +23,13 @@ class _ProductListingPageState extends State<ProductListingPage> {
   @override
   void initState() {
     super.initState();
-    context.read<ProductBloc>().add(FetchProductsByCategory(widget.categoryId));
+    if (widget.categoryId == 'featured') {
+      context.read<ProductBloc>().add(FetchFeaturedProducts());
+    } else if (widget.categoryId == 'new-arrivals') {
+      context.read<ProductBloc>().add(FetchNewArrivals());
+    } else {
+      context.read<ProductBloc>().add(FetchProductsByCategory(widget.categoryId));
+    }
   }
 
   @override

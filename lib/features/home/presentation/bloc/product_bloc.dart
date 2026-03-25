@@ -24,6 +24,10 @@ class FetchProductDetail extends ProductEvent {
   List<Object?> get props => [productId];
 }
 
+class FetchFeaturedProducts extends ProductEvent {}
+
+class FetchNewArrivals extends ProductEvent {}
+
 // States
 abstract class ProductState extends Equatable {
   const ProductState();
@@ -61,6 +65,8 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         super(ProductInitial()) {
     on<FetchProductsByCategory>(_onFetchProductsByCategory);
     on<FetchProductDetail>(_onFetchProductDetail);
+    on<FetchFeaturedProducts>(_onFetchFeaturedProducts);
+    on<FetchNewArrivals>(_onFetchNewArrivals);
   }
 
   Future<void> _onFetchProductsByCategory(
@@ -70,6 +76,32 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     emit(ProductLoading());
     try {
       final products = await _repository.getProductsByCategory(event.categoryId);
+      emit(ProductsLoaded(products));
+    } catch (e) {
+      emit(ProductError(e.toString()));
+    }
+  }
+
+  Future<void> _onFetchFeaturedProducts(
+    FetchFeaturedProducts event,
+    Emitter<ProductState> emit,
+  ) async {
+    emit(ProductLoading());
+    try {
+      final products = await _repository.getFeaturedProducts();
+      emit(ProductsLoaded(products));
+    } catch (e) {
+      emit(ProductError(e.toString()));
+    }
+  }
+
+  Future<void> _onFetchNewArrivals(
+    FetchNewArrivals event,
+    Emitter<ProductState> emit,
+  ) async {
+    emit(ProductLoading());
+    try {
+      final products = await _repository.getNewArrivals();
       emit(ProductsLoaded(products));
     } catch (e) {
       emit(ProductError(e.toString()));

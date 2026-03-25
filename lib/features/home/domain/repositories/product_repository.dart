@@ -10,4 +10,10 @@ abstract class ProductRepository {
 
   /// Searches for products by name or description
   Future<List<Product>> searchProducts(String query);
+
+  /// Fetches featured products
+  Future<List<Product>> getFeaturedProducts();
+
+  /// Fetches new arrival products
+  Future<List<Product>> getNewArrivals();
 }

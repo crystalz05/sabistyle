@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../injection_container.dart';
 import '../../domain/entities/product.dart';
@@ -142,13 +143,17 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 24),
             _buildCategories(context, state),
             const SizedBox(height: 32),
-            _buildSectionHeader(context, 'Featured Products', () {}),
+            _buildSectionHeader(context, 'Featured Products', () {
+              context.push('/home/market/featured?name=Featured%20Products');
+            }),
             const SizedBox(height: 16),
-            _buildHorizontalProductList(state.featuredProducts),
+            _buildProductGrid(context, state.featuredProducts),
             const SizedBox(height: 32),
-            _buildSectionHeader(context, 'New Arrivals', () {}),
+            _buildSectionHeader(context, 'New Arrivals', () {
+              context.push('/home/market/new-arrivals?name=New%20Arrivals');
+            }),
             const SizedBox(height: 16),
-            _buildHorizontalProductList(state.newArrivals),
+            _buildProductGrid(context, state.newArrivals),
             const SizedBox(height: 48),
           ],
         ),
@@ -299,7 +304,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHorizontalProductList(List<Product> products) {
+  Widget _buildProductGrid(BuildContext context, List<Product> products) {
     if (products.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(horizontal: 20),
@@ -307,20 +312,30 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(color: Colors.grey)),
       );
     }
-    return SizedBox(
-      height: 240,
-      child: ListView.builder(
-        padding: const EdgeInsets.only(left: 20, right: 4),
-        scrollDirection: Axis.horizontal,
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          return ProductCard(
-            product: products[index],
-            onTap: () {},
-            onFavoriteTap: () {},
-          );
-        },
+
+    // Randomize and take 6
+    final List<Product> displayProducts = List.from(products)..shuffle();
+    final itemsToShow = displayProducts.take(6).toList();
+
+    return GridView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.75,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
       ),
+      itemCount: itemsToShow.length,
+      itemBuilder: (context, index) {
+        final product = itemsToShow[index];
+        return ProductCard(
+          product: product,
+          onTap: () => context.push('/home/market/product/${product.id}'),
+          onFavoriteTap: () {},
+        );
+      },
     );
   }
 }

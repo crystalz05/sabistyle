@@ -5,6 +5,8 @@ abstract class ProductRemoteDataSource {
   Future<List<ProductModel>> getProductsByCategory(String categoryId);
   Future<ProductModel> getProductById(String productId);
   Future<List<ProductModel>> searchProducts(String query);
+  Future<List<ProductModel>> getFeaturedProducts();
+  Future<List<ProductModel>> getNewArrivals();
 }
 
 class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
@@ -42,6 +44,29 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         .select()
         .eq('is_active', true)
         .or('name.ilike.%$query%,description.ilike.%$query%');
+    
+    return (response as List).map((json) => ProductModel.fromJson(json)).toList();
+  }
+
+  @override
+  Future<List<ProductModel>> getFeaturedProducts() async {
+    final response = await _client
+        .from('products')
+        .select()
+        .eq('is_active', true)
+        .eq('is_featured', true);
+    
+    return (response as List).map((json) => ProductModel.fromJson(json)).toList();
+  }
+
+  @override
+  Future<List<ProductModel>> getNewArrivals() async {
+    final response = await _client
+        .from('products')
+        .select()
+        .eq('is_active', true)
+        .order('created_at', ascending: false)
+        .limit(20);
     
     return (response as List).map((json) => ProductModel.fromJson(json)).toList();
   }
