@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sabistyle/features/home/presentation/bloc/home_bloc.dart';
 import 'package:sabistyle/features/home/presentation/bloc/home_event.dart';
 import 'package:sabistyle/features/home/presentation/bloc/home_state.dart';
+import 'package:sabistyle/features/widgets/app_error_widget.dart';
 import 'package:sabistyle/injection_container.dart';
 
 class MarketPage extends StatefulWidget {
@@ -74,7 +75,10 @@ class _MarketPageState extends State<MarketPage> {
                 },
               );
             } else if (state is HomeError) {
-              return Center(child: Text(state.message));
+              return AppErrorWidget(
+                message: state.message,
+                onRetry: () => context.read<HomeBloc>().add(FetchHomeData()),
+              );
             }
             return const Center(child: Text('No categories found'));
           },

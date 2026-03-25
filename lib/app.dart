@@ -10,6 +10,7 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth_event.dart';
 import 'injection_container.dart';
+import 'core/network/network_bloc.dart';
 
 class MyApp extends StatefulWidget {
   final Uri? initialUri;
@@ -58,8 +59,13 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthBloc>.value(
-      value: _authBloc,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>.value(value: _authBloc),
+        BlocProvider<NetworkBloc>(
+          create: (_) => sl<NetworkBloc>()..add(NetworkCheckRequested()),
+        ),
+      ],
       child: MaterialApp.router(
         title: 'SabiStyle',
         debugShowCheckedModeBanner: false,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sabistyle/features/home/presentation/bloc/search_bloc.dart';
 import 'package:sabistyle/features/home/presentation/widgets/product_card.dart';
 import 'package:sabistyle/features/widgets/app_empty_state.dart';
+import 'package:sabistyle/features/widgets/app_error_widget.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -165,7 +166,10 @@ class _SearchPageState extends State<SearchPage> {
               ],
             );
           } else if (state is SearchError) {
-            return Center(child: Text(state.message));
+            return AppErrorWidget(
+              message: state.message,
+              onRetry: () => _onSearch(_searchController.text),
+            );
           }
           return const SizedBox.shrink();
         },

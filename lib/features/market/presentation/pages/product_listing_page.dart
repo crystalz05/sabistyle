@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sabistyle/features/home/presentation/bloc/product_bloc.dart';
 import 'package:sabistyle/features/home/presentation/widgets/product_card.dart';
 import 'package:sabistyle/features/widgets/app_empty_state.dart';
+import 'package:sabistyle/features/widgets/app_error_widget.dart';
 
 class ProductListingPage extends StatefulWidget {
   final String categoryId;
@@ -76,7 +77,18 @@ class _ProductListingPageState extends State<ProductListingPage> {
               },
             );
           } else if (state is ProductError) {
-            return Center(child: Text(state.message));
+            return AppErrorWidget(
+              message: state.message,
+              onRetry: () {
+                if (widget.categoryId == 'featured') {
+                  context.read<ProductBloc>().add(FetchFeaturedProducts());
+                } else if (widget.categoryId == 'new-arrivals') {
+                  context.read<ProductBloc>().add(FetchNewArrivals());
+                } else {
+                  context.read<ProductBloc>().add(FetchProductsByCategory(widget.categoryId));
+                }
+              },
+            );
           }
           return const SizedBox.shrink();
         },

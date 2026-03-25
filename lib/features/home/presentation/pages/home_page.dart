@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../injection_container.dart';
+import '../../../widgets/app_error_widget.dart';
 import '../../domain/entities/product.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
@@ -101,28 +102,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildErrorState(BuildContext context, String message) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline_rounded, size: 64, color: theme.colorScheme.error),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              message,
-              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => context.read<HomeBloc>().add(FetchHomeData()),
-            child: const Text('Retry'),
-          ),
-        ],
-      ),
+    return AppErrorWidget(
+      message: message,
+      onRetry: () => context.read<HomeBloc>().add(FetchHomeData()),
     );
   }
 

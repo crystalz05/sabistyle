@@ -6,6 +6,8 @@ import 'package:sabistyle/features/home/presentation/bloc/product_bloc.dart';
 import 'package:sabistyle/features/home/presentation/bloc/review_bloc.dart';
 import 'package:sabistyle/features/home/domain/entities/review.dart';
 
+import '../../../home/domain/entities/product.dart';
+
 class ProductDetailPage extends StatefulWidget {
   final String productId;
 
@@ -17,6 +19,8 @@ class ProductDetailPage extends StatefulWidget {
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
   int _quantity = 1;
+  String? _selectedSize;
+  String? _selectedColor;
 
   @override
   void initState() {
@@ -62,6 +66,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             return const Center(child: CircularProgressIndicator());
           } else if (state is ProductDetailLoaded) {
             final product = state.product;
+            
+            // Set defaults if not yet selected but available
+            if (_selectedSize == null && product.sizes.isNotEmpty) {
+              _selectedSize = product.sizes.first;
+            }
+            if (_selectedColor == null && product.colors.isNotEmpty) {
+              _selectedColor = product.colors.first;
+            }
+
             return Stack(
               children: [
                 SingleChildScrollView(
@@ -173,6 +186,94 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 ),
                               ],
                             ),
+                            // ── Size & Color Selection ──────────────────
+                            if (product.sizes.isNotEmpty) ...[
+                              const SizedBox(height: 24),
+                              Text(
+                                'Size/color',
+                                style: textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                children: product.sizes.map((size) {
+                                  final isSelected = _selectedSize == size;
+                                  return GestureDetector(
+                                    onTap: () => setState(() => _selectedSize = size),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: isSelected ? colorScheme.primary : colorScheme.surface,
+                                        border: Border.all(
+                                          color: isSelected 
+                                              ? colorScheme.primary 
+                                              : colorScheme.outlineVariant,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        size,
+                                        style: textTheme.labelMedium?.copyWith(
+                                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                          color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+
+                            if (product.colors.isNotEmpty) ...[
+                              Divider(),
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                children: product.colors.map((colorName) {
+                                  final isSelected = _selectedColor == colorName;
+                                  return GestureDetector(
+                                    onTap: () => setState(() => _selectedColor = colorName),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: isSelected ? colorScheme.primaryContainer : colorScheme.surface,
+                                        border: Border.all(
+                                          color: isSelected 
+                                              ? colorScheme.primary 
+                                              : colorScheme.outlineVariant,
+                                        ),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 12,
+                                            height: 12,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: _getColorFromName(colorName),
+                                              border: Border.all(color: Colors.black12),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            colorName,
+                                            style: textTheme.labelMedium?.copyWith(
+                                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                              color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
 
                             const SizedBox(height: 24),
 
@@ -205,7 +306,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   bottom: 24,
                   left: 22,
                   right: 22,
-                  child: _AddToCartButton(quantity: _quantity),
+                  child: _AddToCartButton(
+                    quantity: _quantity,
+                    selectedSize: _selectedSize,
+                    selectedColor: _selectedColor,
+                    product: product,
+                  ),
                 ),
               ],
             );
@@ -220,8 +326,32 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sub-widgets
+// Helpers & Sub-widgets
 // ─────────────────────────────────────────────────────────────────────────────
+
+Color _getColorFromName(String colorName) {
+  final name = colorName.toLowerCase().trim();
+  switch (name) {
+    case 'red': return Colors.red;
+    case 'blue': return Colors.blue;
+    case 'green': return Colors.green;
+    case 'yellow': return Colors.yellow;
+    case 'black': return Colors.black;
+    case 'white': return Colors.white;
+    case 'grey':
+    case 'gray': return Colors.grey;
+    case 'brown': return Colors.brown;
+    case 'orange': return Colors.orange;
+    case 'purple': return Colors.purple;
+    case 'pink': return Colors.pink;
+    case 'navy': return const Color(0xFF000080);
+    case 'gold': return const Color(0xFFFFD700);
+    case 'silver': return const Color(0xFFC0C0C0);
+    default:
+      final hash = name.hashCode;
+      return Color((hash & 0xFFFFFF) | 0xFF000000);
+  }
+}
 
 class _RatingBadge extends StatelessWidget {
   final double rating;
@@ -407,13 +537,27 @@ class _ExpandableDescriptionState extends State<_ExpandableDescription> {
 
 class _AddToCartButton extends StatelessWidget {
   final int quantity;
+  final String? selectedSize;
+  final String? selectedColor;
+  final Product product;
 
-  const _AddToCartButton({required this.quantity});
+  const _AddToCartButton({
+    required this.quantity,
+    this.selectedSize,
+    this.selectedColor,
+    required this.product,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+
+    final bool hasSizes = product.sizes.isNotEmpty;
+    final bool hasColors = product.colors.isNotEmpty;
+
+    final bool isValid = (!hasSizes || selectedSize != null) && 
+                         (!hasColors || selectedColor != null);
 
     return Container(
       decoration: BoxDecoration(
@@ -427,10 +571,25 @@ class _AddToCartButton extends StatelessWidget {
         ],
       ),
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: isValid ? () {
+          // TODO: Dispatch add to cart event
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Added $quantity to cart!'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } : () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select required options (Size/Color)'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
         style: ElevatedButton.styleFrom(
-          backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
+          backgroundColor: isValid ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+          foregroundColor: isValid ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
           padding: const EdgeInsets.symmetric(vertical: 18),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(32),
@@ -443,10 +602,10 @@ class _AddToCartButton extends StatelessWidget {
             const Icon(Icons.shopping_bag_outlined, size: 20),
             const SizedBox(width: 10),
             Text(
-              'Add $quantity to Cart',
+              isValid ? 'Add $quantity to Cart' : 'Select Options',
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: colorScheme.onPrimary,
+                color: isValid ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
                 letterSpacing: 0.2,
               ),
             ),
@@ -604,7 +763,7 @@ class _ReviewCard extends StatelessWidget {
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    (review.userName ?? 'A')[0].toUpperCase(),
+                    (review.userName?.isNotEmpty == true ? review.userName! : 'A')[0].toUpperCase(),
                     style: textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: colorScheme.onSurfaceVariant,

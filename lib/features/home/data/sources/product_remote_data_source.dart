@@ -35,15 +35,12 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     
     return ProductModel.fromJson(response);
   }
-
   @override
   Future<List<ProductModel>> searchProducts(String query) async {
-    // Basic text search on name and description
-    final response = await _client
-        .from('products')
-        .select()
-        .eq('is_active', true)
-        .or('name.ilike.%$query%,description.ilike.%$query%');
+    // Use the custom Postgres function that ranks name matches above description matches
+    final response = await _client.rpc('search_products', params: {
+      'search_term': query,
+    });
     
     return (response as List).map((json) => ProductModel.fromJson(json)).toList();
   }

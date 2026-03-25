@@ -21,7 +21,7 @@ class ReviewModel extends Review {
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at'] as String) 
           : null,
-      userName: json['full_name'] as String?, // From join with profiles/users
+      userName: json['reviewer_name'] as String?, // From reviews table
     );
   }
 

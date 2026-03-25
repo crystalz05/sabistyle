@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'features/auth/auth_injection.dart';
 import 'features/home/home_injection.dart';
+import 'core/network/network_info.dart';
+import 'core/network/network_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -24,6 +26,9 @@ Future<void> init(SharedPreferences sharedPreferences) async {
   sl.registerLazySingleton(() => sharedPreferences);
 
   // ── Features ─────────────────────────────────────────────────────────────
+  sl.registerLazySingleton(() => NetworkInfo.instance);
+  sl.registerFactory(() => NetworkBloc(sl()));
+
   registerAuthDependencies(sl);
   registerHomeDependencies(sl);
   // registerProductDependencies(sl);   ← add future features here

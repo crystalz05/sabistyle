@@ -73,7 +73,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     on<SearchQueryChanged>(
       _onSearchQueryChanged,
       transformer: (events, mapper) => events
-          .debounceTime(const Duration(milliseconds: 300))
+          .debounceTime(const Duration(milliseconds: 400))
           .switchMap(mapper),
     );
     on<ClearSearch>(_onClearSearch);
@@ -118,6 +118,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       }
       return;
     }
+
+    if (event.query.trim().length < 2) return; // don't search single characters
 
     emit(SearchLoading());
     try {
