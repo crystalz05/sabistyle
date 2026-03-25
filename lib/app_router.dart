@@ -13,12 +13,19 @@ import 'features/auth/presentation/pages/reset_password_page.dart';
 import 'features/auth/presentation/pages/signup_page.dart';
 import 'features/auth/presentation/pages/splash_page.dart';
 import 'features/auth/presentation/pages/verify_email_page.dart';
+import 'features/home/presentation/bloc/review_bloc.dart';
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/home/presentation/widgets/main_navigation_shell.dart';
 import 'features/market/presentation/pages/market_page.dart';
+import 'features/market/presentation/pages/product_listing_page.dart';
+import 'features/market/presentation/pages/product_detail_page.dart';
+import 'features/market/presentation/pages/search_page.dart';
+import 'features/home/presentation/bloc/product_bloc.dart';
+import 'features/home/presentation/bloc/search_bloc.dart';
 import 'features/orders/presentation/pages/orders_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'features/wishlist/presentation/pages/wishlist_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 // ─────────────────────────────────────────────────────────────
 // Route name constants — use these for named navigation so
@@ -34,6 +41,9 @@ abstract final class AppRoutes {
   static const resetPassword = '/reset-password';
   static const home = '/home';
   static const market = '/home/market';
+  static const productListing = '/home/market/:categoryId';
+  static const productDetail = '/home/market/product/:productId';
+  static const search = '/home/market/search';
   static const wishlist = '/home/wishlist';
   static const orders = '/home/orders';
   static const profile = '/home/profile';
@@ -176,7 +186,49 @@ GoRouter createRouter(AuthBloc authBloc) {
             routes: [
               GoRoute(
                 path: AppRoutes.market,
-                builder: (context, state) => const MarketPage(),
+                builder: (context, state) => MultiBlocProvider(
+                  providers: [
+                    BlocProvider(create: (context) => GetIt.I<ProductBloc>()),
+                    BlocProvider(create: (context) => GetIt.I<SearchBloc>()),
+                  ],
+                  child: const MarketPage(),
+                ),
+                routes: [
+                  GoRoute(
+                    path: ':categoryId',
+                    builder: (context, state) {
+                      final categoryId = state.pathParameters['categoryId']!;
+                      final categoryName = state.uri.queryParameters['name'] ?? 'Products';
+                      return BlocProvider(
+                        create: (context) => GetIt.I<ProductBloc>(),
+                        child: ProductListingPage(
+                          categoryId: categoryId,
+                          categoryName: categoryName,
+                        ),
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'product/:productId',
+                    builder: (context, state) {
+                      final productId = state.pathParameters['productId']!;
+                      return MultiBlocProvider(
+                        providers: [
+                          BlocProvider(create: (context) => GetIt.I<ProductBloc>()),
+                          BlocProvider(create: (context) => GetIt.I<ReviewBloc>()),
+                        ],
+                        child: ProductDetailPage(productId: productId),
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'search',
+                    builder: (context, state) => BlocProvider(
+                      create: (context) => GetIt.I<SearchBloc>(),
+                      child: const SearchPage(),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

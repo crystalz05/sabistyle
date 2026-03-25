@@ -11,6 +11,8 @@ class ProductModel extends Product {
     required super.sizes,
     required super.colors,
     required super.stockQty,
+    super.avgRating = 0.0,
+    super.reviewCount = 0,
     required super.isFeatured,
     required super.isActive,
     super.createdAt,
@@ -27,6 +29,8 @@ class ProductModel extends Product {
       sizes: List<String>.from(json['sizes'] ?? []),
       colors: List<String>.from(json['colors'] ?? []),
       stockQty: json['stock_qty'] as int? ?? 0,
+      avgRating: (json['avg_rating'] as num?)?.toDouble() ?? 0.0,
+      reviewCount: json['review_count'] as int? ?? 0,
       isFeatured: json['is_featured'] as bool? ?? false,
       isActive: json['is_active'] as bool? ?? true,
       createdAt: json['created_at'] != null 
@@ -35,6 +39,7 @@ class ProductModel extends Product {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -46,6 +51,8 @@ class ProductModel extends Product {
       'sizes': sizes,
       'colors': colors,
       'stock_qty': stockQty,
+      'avg_rating': avgRating,
+      'review_count': reviewCount,
       'is_featured': isFeatured,
       'is_active': isActive,
       'created_at': createdAt?.toIso8601String(),
