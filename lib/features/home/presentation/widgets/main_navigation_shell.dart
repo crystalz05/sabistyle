@@ -27,7 +27,7 @@ class MainNavigationShell extends StatelessWidget {
           child: Container(
             height: 70,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(35),
               boxShadow: [
                 BoxShadow(
