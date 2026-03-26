@@ -2,10 +2,13 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'features/auth/auth_injection.dart';
-import 'features/home/home_injection.dart';
-import 'core/network/network_info.dart';
 import 'core/network/network_bloc.dart';
+import 'core/network/network_info.dart';
+import 'features/auth/auth_injection.dart';
+import 'features/cart/cart_injection.dart';
+import 'features/checkout/checkout_injection.dart';
+import 'features/home/home_injection.dart';
+import 'features/wishlist/wishlist_injection.dart';
 
 final sl = GetIt.instance;
 
@@ -31,5 +34,9 @@ Future<void> init(SharedPreferences sharedPreferences) async {
 
   registerAuthDependencies(sl);
   registerHomeDependencies(sl);
-  // registerProductDependencies(sl);   ← add future features here
+
+  // Shopping features
+  registerWishlistDependencies(sl);
+  registerCartDependencies(sl);
+  registerCheckoutDependencies(sl);
 }

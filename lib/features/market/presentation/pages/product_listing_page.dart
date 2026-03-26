@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sabistyle/features/home/presentation/bloc/product_bloc.dart';
-import 'package:sabistyle/features/home/presentation/widgets/product_card.dart';
 import 'package:sabistyle/features/widgets/app_empty_state.dart';
 import 'package:sabistyle/features/widgets/app_error_widget.dart';
+import 'package:sabistyle/features/widgets/product_card.dart';
+import 'package:sabistyle/features/wishlist/presentation/bloc/wishlist_bloc.dart';
 
 class ProductListingPage extends StatefulWidget {
   final String categoryId;
@@ -24,6 +25,9 @@ class _ProductListingPageState extends State<ProductListingPage> {
   @override
   void initState() {
     super.initState();
+    // Load wishlist IDs so heart icons show the correct filled/unfilled state
+    context.read<WishlistBloc>().add(LoadWishlistedIds());
+
     if (widget.categoryId == 'featured') {
       context.read<ProductBloc>().add(FetchFeaturedProducts());
     } else if (widget.categoryId == 'new-arrivals') {
@@ -36,7 +40,7 @@ class _ProductListingPageState extends State<ProductListingPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -63,7 +67,7 @@ class _ProductListingPageState extends State<ProductListingPage> {
               padding: const EdgeInsets.all(16),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.7,
+                childAspectRatio: 0.72,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
@@ -72,7 +76,11 @@ class _ProductListingPageState extends State<ProductListingPage> {
                 final product = state.products[index];
                 return ProductCard(
                   product: product,
-                  onTap: () => context.push('/home/market/product/${product.id}'),
+                  onTap: () =>
+                      context.push('/home/market/product/${product.id}'),
+                  onFavoriteTap: () {
+                    context.read<WishlistBloc>().add(ToggleWishlist(product));
+                  },
                 );
               },
             );
@@ -85,7 +93,9 @@ class _ProductListingPageState extends State<ProductListingPage> {
                 } else if (widget.categoryId == 'new-arrivals') {
                   context.read<ProductBloc>().add(FetchNewArrivals());
                 } else {
-                  context.read<ProductBloc>().add(FetchProductsByCategory(widget.categoryId));
+                  context
+                      .read<ProductBloc>()
+                      .add(FetchProductsByCategory(widget.categoryId));
                 }
               },
             );

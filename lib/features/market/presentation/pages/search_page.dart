@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sabistyle/features/home/presentation/bloc/search_bloc.dart';
-import 'package:sabistyle/features/home/presentation/widgets/product_card.dart';
+import 'package:sabistyle/features/widgets/product_card.dart';
 import 'package:sabistyle/features/widgets/app_empty_state.dart';
 import 'package:sabistyle/features/widgets/app_error_widget.dart';
 
