@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:sabistyle/features/home/presentation/bloc/product_bloc.dart';
 import 'package:sabistyle/features/home/presentation/bloc/review_bloc.dart';
 import 'package:sabistyle/features/home/domain/entities/review.dart';
+import 'package:sabistyle/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:sabistyle/features/wishlist/presentation/bloc/wishlist_bloc.dart';
 
 import '../../../home/domain/entities/product.dart';
 
@@ -27,6 +29,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     super.initState();
     context.read<ProductBloc>().add(FetchProductDetail(widget.productId));
     context.read<ReviewBloc>().add(FetchReviews(widget.productId));
+    // Ensure wishlist ids are loaded so the heart icon reflects the right state
+    context.read<WishlistBloc>().add(LoadWishlistedIds());
   }
 
   @override
@@ -53,9 +57,78 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
         ),
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.favorite_border_rounded, color: colorScheme.onSurface),
+          BlocBuilder<WishlistBloc, WishlistState>(
+            buildWhen: (previous, current) => current is WishlistIdsLoaded || current is WishlistLoaded,
+            builder: (context, state) {
+              Set<String> wishlistedIds = {};
+              if (state is WishlistLoaded) {
+                wishlistedIds = state.wishlistedProductIds;
+              } else if (state is WishlistIdsLoaded) {
+                wishlistedIds = state.wishlistedProductIds;
+              }
+
+              final isWishlisted = wishlistedIds.contains(widget.productId);
+
+              return IconButton(
+                onPressed: () {
+                  if (isWishlisted) {
+                    // For remove, we'd need the wishlistId. For MVP simplicity on product details,
+                    // we might just fetch the full list if we need to remove, or only allow add here.
+                    // But we can just use AddToWishlist and let the repo handle ignoring duplicates.
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Already in wishlist')),
+                    );
+                  } else {
+                    context.read<WishlistBloc>().add(AddToWishlist(widget.productId));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Added to wishlist ♡')),
+                    );
+                  }
+                },
+                icon: Icon(
+                  isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  color: isWishlisted ? colorScheme.error : colorScheme.onSurface,
+                ),
+              );
+            },
+          ),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: Icon(Icons.local_mall_outlined, color: colorScheme.onSurface),
+                onPressed: () => context.push('/home/cart'),
+              ),
+              BlocBuilder<CartBloc, CartState>(
+                builder: (context, state) {
+                  int count = 0;
+                  if (state is CartLoaded) {
+                    count = state.items.fold(0, (sum, item) => sum + item.quantity);
+                  }
+                  if (count == 0) return const SizedBox.shrink();
+
+                  return Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: colorScheme.error,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        count > 99 ? '99+' : count.toString(),
+                        style: textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onError,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ) ?? const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
           const SizedBox(width: 8),
         ],
@@ -572,11 +645,22 @@ class _AddToCartButton extends StatelessWidget {
       ),
       child: ElevatedButton(
         onPressed: isValid ? () {
-          // TODO: Dispatch add to cart event
+          context.read<CartBloc>().add(
+            AddToCart(
+              productId: product.id,
+              quantity: quantity,
+              size: selectedSize ?? '',
+              color: selectedColor ?? '',
+            ),
+          );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Added $quantity to cart!'),
               behavior: SnackBarBehavior.floating,
+              action: SnackBarAction(
+                label: 'VIEW CART',
+                onPressed: () => context.push('/home/cart'),
+              ),
             ),
           );
         } : () {

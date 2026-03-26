@@ -9,6 +9,7 @@ import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
 import '../widgets/product_card.dart';
+import '../../../cart/presentation/bloc/cart_bloc.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -73,26 +74,36 @@ class _HomePageState extends State<HomePage> {
           children: [
             IconButton(
               icon: Icon(Icons.local_mall_outlined, color: theme.colorScheme.onSurface),
-              onPressed: () {},
+              onPressed: () => context.push('/home/cart'),
             ),
-            Positioned(
-              right: 8,
-              top: 8,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.error,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  '2',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onError, 
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
-                  ) ?? const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              ),
+            BlocBuilder<CartBloc, CartState>(
+              builder: (context, state) {
+                int count = 0;
+                if (state is CartLoaded) {
+                  count = state.items.fold(0, (sum, item) => sum + item.quantity);
+                }
+                if (count == 0) return const SizedBox.shrink();
+
+                return Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.error,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      count > 99 ? '99+' : count.toString(),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onError,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
+                      ) ?? const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
