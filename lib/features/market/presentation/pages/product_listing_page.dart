@@ -67,7 +67,7 @@ class _ProductListingPageState extends State<ProductListingPage> {
               padding: const EdgeInsets.all(16),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.62,
+                childAspectRatio: 0.72,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
@@ -106,8 +106,6 @@ class _ProductListingPageState extends State<ProductListingPage> {
                         .read<WishlistBloc>()
                         .add(AddToWishlist(product.id));
                   },
-                  onAddToCart: () =>
-                      context.push('/home/market/product/${product.id}'),
                 );
               },
             );

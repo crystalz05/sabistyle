@@ -65,15 +65,38 @@ class _WishlistPageState extends State<WishlistPage> {
                 itemCount: state.items.length,
                 itemBuilder: (context, index) {
                   final item = state.items[index];
+                  final product = item.product;
                   return ProductCard(
-                    product: item.product,
+                    product: product,
                     onTap: () =>
-                        context.push('/home/market/product/${item.product.id}'),
+                        context.push('/home/market/product/${product.id}'),
                     onFavoriteTap: () => context
                         .read<WishlistBloc>()
                         .add(RemoveFromWishlist(item.wishlistId)),
-                    onAddToCart: () =>
-                        context.push('/home/market/product/${item.product.id}'),
+                    onAddToCart: () {
+                      if (product.sizes.isEmpty && product.colors.isEmpty) {
+                        context.read<CartBloc>().add(
+                              AddToCart(
+                                productId: product.id,
+                                quantity: 1,
+                                size: '',
+                                color: '',
+                              ),
+                            );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Added ${product.name} to cart!'),
+                            behavior: SnackBarBehavior.floating,
+                            action: SnackBarAction(
+                              label: 'VIEW CART',
+                              onPressed: () => context.push('/home/cart'),
+                            ),
+                          ),
+                        );
+                      } else {
+                        context.push('/home/market/product/${product.id}');
+                      }
+                    },
                   );
                 },
               ),

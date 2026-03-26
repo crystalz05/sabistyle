@@ -632,70 +632,96 @@ class _AddToCartButton extends StatelessWidget {
     final bool isValid = (!hasSizes || selectedSize != null) && 
                          (!hasColors || selectedColor != null);
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.primary.withValues(alpha: 0.35),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: isValid ? () {
-          context.read<CartBloc>().add(
-            AddToCart(
-              productId: product.id,
-              quantity: quantity,
-              size: selectedSize ?? '',
-              color: selectedColor ?? '',
-            ),
-          );
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Added $quantity to cart!'),
-              behavior: SnackBarBehavior.floating,
-              action: SnackBarAction(
-                label: 'VIEW CART',
-                onPressed: () => context.push('/home/cart'),
-              ),
-            ),
-          );
-        } : () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please select required options (Size/Color)'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isValid ? colorScheme.primary : colorScheme.surfaceContainerHighest,
-          foregroundColor: isValid ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          shape: RoundedRectangleBorder(
+    return BlocBuilder<CartBloc, CartState>(
+      builder: (context, state) {
+        final isLoading = state is CartLoading;
+
+        return Container(
+          decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(32),
-          ),
-          elevation: 0,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.shopping_bag_outlined, size: 20),
-            const SizedBox(width: 10),
-            Text(
-              isValid ? 'Add $quantity to Cart' : 'Select Options',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: isValid ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
-                letterSpacing: 0.2,
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.primary.withValues(alpha: 0.35),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
               ),
+            ],
+          ),
+          child: ElevatedButton(
+            onPressed: (isValid && !isLoading)
+                ? () {
+                    context.read<CartBloc>().add(
+                          AddToCart(
+                            productId: product.id,
+                            quantity: quantity,
+                            size: selectedSize ?? '',
+                            color: selectedColor ?? '',
+                          ),
+                        );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Added $quantity to cart!'),
+                        behavior: SnackBarBehavior.floating,
+                        action: SnackBarAction(
+                          label: 'VIEW CART',
+                          onPressed: () => context.push('/home/cart'),
+                        ),
+                      ),
+                    );
+                  }
+                : isValid
+                    ? null
+                    : () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please select required options (Size/Color)'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isValid
+                  ? colorScheme.primary
+                  : colorScheme.surfaceContainerHighest,
+              foregroundColor:
+                  isValid ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(32),
+              ),
+              elevation: 0,
             ),
-          ],
-        ),
-      ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isLoading)
+                  SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colorScheme.onPrimary,
+                    ),
+                  )
+                else ...[
+                  const Icon(Icons.shopping_bag_outlined, size: 20),
+                  const SizedBox(width: 10),
+                  Text(
+                    isValid ? 'Add $quantity to Cart' : 'Select Options',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: isValid
+                          ? colorScheme.onPrimary
+                          : colorScheme.onSurfaceVariant,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

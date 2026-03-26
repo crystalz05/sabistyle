@@ -128,6 +128,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   Future<void> _onAddToCart(AddToCart event, Emitter<CartState> emit) async {
+    emit(CartLoading());
     try {
       await _repository.addItem(
         productId: event.productId,
