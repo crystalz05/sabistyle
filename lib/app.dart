@@ -11,6 +11,8 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth_event.dart';
 import 'injection_container.dart';
 import 'core/network/network_bloc.dart';
+import 'features/cart/presentation/bloc/cart_bloc.dart';
+import 'features/wishlist/presentation/bloc/wishlist_bloc.dart';
 
 class MyApp extends StatefulWidget {
   final Uri? initialUri;
@@ -64,6 +66,12 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<AuthBloc>.value(value: _authBloc),
         BlocProvider<NetworkBloc>(
           create: (_) => sl<NetworkBloc>()..add(NetworkCheckRequested()),
+        ),
+        BlocProvider<WishlistBloc>(
+          create: (context) => sl<WishlistBloc>()..add(LoadWishlistedIds()),
+        ),
+        BlocProvider<CartBloc>(
+          create: (context) => sl<CartBloc>()..add(FetchCart()),
         ),
       ],
       child: MaterialApp.router(

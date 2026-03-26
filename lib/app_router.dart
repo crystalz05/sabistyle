@@ -204,8 +204,8 @@ GoRouter createRouter(AuthBloc authBloc) {
           return MainNavigationShell(navigationShell: navigationShell);
         },
         branches: [
-          StatefulShellBranch(
-            routes: [
+           StatefulShellBranch(
+             routes: [
                GoRoute(
                  path: AppRoutes.home,
                  builder: (context, state) => const HomePage(),
@@ -217,159 +217,155 @@ GoRouter createRouter(AuthBloc authBloc) {
                        child: const SearchPage(),
                      ),
                    ),
+                 ],
+               ),
+             ],
+           ),
+           StatefulShellBranch(
+             routes: [
+                GoRoute(
+                  path: AppRoutes.market,
+                  builder: (context, state) => BlocProvider(
+                    create: (context) => GetIt.I<ProductBloc>(),
+                    child: const MarketPage(),
+                  ),
+                  routes: [
+                    GoRoute(
+                      path: 'search',
+                      builder: (context, state) => BlocProvider(
+                        create: (_) => GetIt.I<SearchBloc>(),
+                        child: const SearchPage(),
+                      ),
+                    ),
+                    GoRoute(
+                      path: ':categoryId',
+                      builder: (context, state) {
+                        final categoryId = state.pathParameters['categoryId']!;
+                        final categoryName =
+                            state.uri.queryParameters['name'] ?? 'Products';
+                        return BlocProvider(
+                          create: (_) => GetIt.I<ProductBloc>(),
+                          child: ProductListingPage(
+                            categoryId: categoryId,
+                            categoryName: categoryName,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+             ],
+           ),
+           StatefulShellBranch(
+             routes: [
+               GoRoute(
+                 path: AppRoutes.wishlist,
+                 builder: (context, state) => const WishlistPage(),
+               ),
+             ],
+           ),
+           StatefulShellBranch(
+             routes: [
+               GoRoute(
+                 path: AppRoutes.orders,
+                 builder: (context, state) => const OrdersPage(),
+               ),
+             ],
+           ),
+           StatefulShellBranch(
+             routes: [
+               GoRoute(
+                 path: AppRoutes.profile,
+                 builder: (context, state) => const ProfilePage(),
+               ),
+             ],
+           ),
+         ],
+       ),
+       GoRoute(
+         path: AppRoutes.addresses,
+         builder: (context, state) {
+           final isSelecting = state.uri.queryParameters['selecting'] == 'true';
+           return BlocProvider.value(
+             value: GetIt.I<AddressBloc>(),
+             child: AddressPage(isSelecting: isSelecting),
+           );
+         },
+       ),
+       GoRoute(
+         path: AppRoutes.cart,
+         builder: (context, state) => const CartPage(),
+         routes: [
+           ShellRoute(
+             builder: (context, state, child) {
+               return MultiBlocProvider(
+                 providers: [
+                   BlocProvider.value(value: GetIt.I<CartBloc>()),
+                   BlocProvider(
+                     create: (_) => GetIt.I<AddressBloc>(),
+                   ),
+                   BlocProvider(
+                     create: (_) => GetIt.I<CheckoutBloc>(),
+                   ),
+                 ],
+                 child: child,
+               );
+             },
+             routes: [
+               GoRoute(
+                 path: 'checkout',
+                 builder: (context, state) {
+                   final extra = state.extra as Map<String, dynamic>;
+                   return CheckoutPage(
+                     cartItems: extra['cartItems'] as List<CartItem>,
+                     subtotal: extra['total'] as double,
+                     initialPromoCode: extra['promoCode'] as String?,
+                   );
+                 },
+                 routes: [
                    GoRoute(
-                     path: 'cart',
-                     builder: (context, state) => const CartPage(),
-                     routes: [
-                       ShellRoute(
-                         builder: (context, state, child) {
-                           return MultiBlocProvider(
-                             providers: [
-                               BlocProvider.value(value: GetIt.I<CartBloc>()),
-                               BlocProvider(
-                                 create: (_) => GetIt.I<AddressBloc>(),
-                               ),
-                               BlocProvider(
-                                 create: (_) => GetIt.I<CheckoutBloc>(),
-                               ),
-                             ],
-                             child: child,
-                           );
-                         },
-                         routes: [
-                           GoRoute(
-                             path: 'checkout',
-                             builder: (context, state) {
-                               final extra = state.extra as Map<String, dynamic>;
-                               return CheckoutPage(
-                                 cartItems: extra['cartItems'] as List<CartItem>,
-                                 subtotal: extra['total'] as double,
-                                 initialPromoCode: extra['promoCode'] as String?,
-                               );
-                             },
-                             routes: [
-                               GoRoute(
-                                 path: 'payment',
-                                 builder: (context, state) {
-                                   final extra = state.extra as Map<String, dynamic>;
-                                   return PaymentPage(
-                                     addressId: extra['addressId'] as String,
-                                     items: extra['items'] as List<OrderItem>,
-                                     totalAmount: extra['totalAmount'] as double,
-                                     discountAmount: extra['discountAmount'] as double,
-                                     promoCodeId: extra['promoCodeId'] as String?,
-                                   );
-                                 },
-                               ),
-                               GoRoute(
-                                 path: 'confirmation',
-                                 builder: (context, state) {
-                                   final orderId = state.extra as String;
-                                   return OrderConfirmationPage(orderId: orderId);
-                                 },
-                               ),
-                             ],
-                           ),
-                         ],
-                       ),
-                     ],
+                     path: 'payment',
+                     builder: (context, state) {
+                       final extra = state.extra as Map<String, dynamic>;
+                       return PaymentPage(
+                         addressId: extra['addressId'] as String,
+                         items: extra['items'] as List<OrderItem>,
+                         totalAmount: extra['totalAmount'] as double,
+                         discountAmount: extra['discountAmount'] as double,
+                         promoCodeId: extra['promoCodeId'] as String?,
+                       );
+                     },
+                   ),
+                   GoRoute(
+                     path: 'confirmation',
+                     builder: (context, state) {
+                       final orderId = state.extra as String;
+                       return OrderConfirmationPage(orderId: orderId);
+                     },
                    ),
                  ],
                ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.market,
-                builder: (context, state) => BlocProvider(
-                  create: (context) => GetIt.I<ProductBloc>(),
-                  child: const MarketPage(),
-                ),
-                routes: [
-                  // Literal routes MUST come before wildcard :categoryId
-                  GoRoute(
-                    path: 'search',
-                    builder: (context, state) => BlocProvider(
-                      create: (_) => GetIt.I<SearchBloc>(),
-                      child: const SearchPage(),
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'product/:productId',
-                    builder: (context, state) {
-                      final productId = state.pathParameters['productId']!;
-                      return MultiBlocProvider(
-                        providers: [
-                          BlocProvider(
-                            create: (_) => GetIt.I<ProductBloc>(),
-                          ),
-                          BlocProvider(
-                            create: (_) => GetIt.I<ReviewBloc>(),
-                          ),
-                        ],
-                        child: ProductDetailPage(productId: productId),
-                      );
-                    },
-                  ),
-                  GoRoute(
-                    path: ':categoryId',
-                    builder: (context, state) {
-                      final categoryId = state.pathParameters['categoryId']!;
-                      final categoryName =
-                          state.uri.queryParameters['name'] ?? 'Products';
-                      return BlocProvider(
-                        create: (_) => GetIt.I<ProductBloc>(),
-                        child: ProductListingPage(
-                          categoryId: categoryId,
-                          categoryName: categoryName,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.wishlist,
-                builder: (context, state) => const WishlistPage(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.orders,
-                builder: (context, state) => const OrdersPage(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.profile,
-                builder: (context, state) => const ProfilePage(),
-                routes: [
-                  GoRoute(
-                    path: 'addresses',
-                    builder: (context, state) {
-                      final isSelecting =
-                          state.uri.queryParameters['selecting'] == 'true';
-                      return BlocProvider.value(
-                        value: GetIt.I<AddressBloc>(),
-                        child: AddressPage(isSelecting: isSelecting),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
+             ],
+           ),
+         ],
+       ),
+       GoRoute(
+         path: AppRoutes.productDetail,
+         builder: (context, state) {
+           final productId = state.pathParameters['productId']!;
+           return MultiBlocProvider(
+             providers: [
+               BlocProvider(
+                 create: (_) => GetIt.I<ProductBloc>(),
+               ),
+               BlocProvider(
+                 create: (_) => GetIt.I<ReviewBloc>(),
+               ),
+             ],
+             child: ProductDetailPage(productId: productId),
+           );
+         },
+       ),
     ],
 
     // Fallback for unrecognised routes.

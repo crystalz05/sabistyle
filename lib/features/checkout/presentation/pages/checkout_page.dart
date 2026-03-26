@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app_router.dart';
 import '../../../cart/domain/entities/cart_item.dart';
 import '../../domain/entities/address.dart';
 import '../../domain/entities/order_item.dart';
@@ -288,7 +289,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return GestureDetector(
       onTap: () async {
         final selected = await context.push<Address>(
-          '/home/addresses?selecting=true',
+          '${AppRoutes.addresses}?selecting=true',
         );
         if (selected != null) {
           setState(() => _selectedAddress = selected);
