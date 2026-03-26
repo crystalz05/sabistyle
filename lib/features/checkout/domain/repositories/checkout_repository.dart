@@ -1,8 +1,9 @@
+import '../../../cart/domain/entities/promo_code.dart';
 import '../entities/order_item.dart';
 
 abstract class CheckoutRepository {
-  /// Validates a promo code and returns [discountAmount]. Returns 0 if invalid.
-  Future<double> validatePromoCode(String code, double orderTotal);
+  /// Validates a promo code and returns [PromoCode]. Returns null if invalid.
+  Future<PromoCode?> validatePromoCode(String code, double orderTotal);
 
   /// Creates an order in Supabase and returns the new order ID.
   Future<String> placeOrder({

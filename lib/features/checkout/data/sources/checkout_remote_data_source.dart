@@ -1,8 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../cart/data/models/promo_code_model.dart';
 import '../../domain/entities/order_item.dart';
 
 abstract class CheckoutRemoteDataSource {
-  Future<double> validatePromoCode(String code, double orderTotal);
+  Future<PromoCodeModel?> validatePromoCode(String code, double orderTotal);
   Future<String> placeOrder({
     required String addressId,
     required List<OrderItem> items,
@@ -22,35 +24,28 @@ class CheckoutRemoteDataSourceImpl implements CheckoutRemoteDataSource {
   String get _userId => _client.auth.currentUser!.id;
 
   @override
-  Future<double> validatePromoCode(String code, double orderTotal) async {
+  Future<PromoCodeModel?> validatePromoCode(String code, double orderTotal) async {
     final response = await _client
         .from('promo_codes')
         .select()
         .eq('code', code.toUpperCase())
         .maybeSingle();
 
-    if (response == null) return 0;
+    if (response == null) return null;
 
     // Check expiry
     final expiresAt = response['expires_at'];
     if (expiresAt != null) {
       final expiry = DateTime.parse(expiresAt as String);
-      if (expiry.isBefore(DateTime.now())) return 0;
+      if (expiry.isBefore(DateTime.now())) return null;
     }
 
     // Check usage limit
     final maxUses = response['max_uses'] as int?;
     final usedCount = response['used_count'] as int? ?? 0;
-    if (maxUses != null && usedCount >= maxUses) return 0;
+    if (maxUses != null && usedCount >= maxUses) return null;
 
-    final discountType = response['discount_type'] as String;
-    final discountValue = (response['discount_value'] as num).toDouble();
-
-    if (discountType == 'percentage') {
-      return orderTotal * (discountValue / 100);
-    } else {
-      return discountValue;
-    }
+    return PromoCodeModel.fromJson(response);
   }
 
   @override

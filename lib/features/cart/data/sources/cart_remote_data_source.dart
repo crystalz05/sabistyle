@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/cart_item_model.dart';
+import '../models/promo_code_model.dart';
 
 abstract class CartRemoteDataSource {
   Future<List<CartItemModel>> fetchCart();
@@ -12,6 +13,7 @@ abstract class CartRemoteDataSource {
   Future<void> updateQuantity(String cartItemId, int quantity);
   Future<void> removeItem(String cartItemId);
   Future<void> clearCart();
+  Future<PromoCodeModel?> validatePromoCode(String code);
   Future<int> getCartCount();
 }
 
@@ -86,6 +88,31 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   @override
   Future<void> clearCart() async {
     await _client.from('cart_items').delete().eq('user_id', _userId);
+  }
+
+  @override
+  Future<PromoCodeModel?> validatePromoCode(String code) async {
+    final response = await _client
+        .from('promo_codes')
+        .select()
+        .eq('code', code.toUpperCase())
+        .maybeSingle();
+
+    if (response == null) return null;
+
+    // Check expiry
+    final expiresAt = response['expires_at'];
+    if (expiresAt != null) {
+      final expiry = DateTime.parse(expiresAt as String);
+      if (expiry.isBefore(DateTime.now())) return null;
+    }
+
+    // Check usage limit
+    final maxUses = response['max_uses'] as int?;
+    final usedCount = response['used_count'] as int? ?? 0;
+    if (maxUses != null && usedCount >= maxUses) return null;
+
+    return PromoCodeModel.fromJson(response);
   }
 
   @override

@@ -316,11 +316,12 @@ GoRouter createRouter(AuthBloc authBloc) {
                  path: 'checkout',
                  builder: (context, state) {
                    final extra = state.extra as Map<String, dynamic>;
-                   return CheckoutPage(
-                     cartItems: extra['cartItems'] as List<CartItem>,
-                     subtotal: extra['total'] as double,
-                     initialPromoCode: extra['promoCode'] as String?,
-                   );
+                    return CheckoutPage(
+                      cartItems: extra['cartItems'] as List<CartItem>,
+                      subtotal: extra['subtotal'] as double,
+                      initialPromoCode: extra['promoCode'] as String?,
+                      initialDiscountAmount: extra['discountAmount'] as double?,
+                    );
                  },
                  routes: [
                    GoRoute(

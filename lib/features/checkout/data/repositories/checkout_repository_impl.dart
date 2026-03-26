@@ -1,4 +1,5 @@
 import '../../../../core/error/error_mapper.dart';
+import '../../../cart/domain/entities/promo_code.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/repositories/checkout_repository.dart';
 import '../sources/checkout_remote_data_source.dart';
@@ -10,7 +11,7 @@ class CheckoutRepositoryImpl implements CheckoutRepository {
     : _remoteDataSource = remoteDataSource;
 
   @override
-  Future<double> validatePromoCode(String code, double orderTotal) async {
+  Future<PromoCode?> validatePromoCode(String code, double orderTotal) async {
     try {
       return await _remoteDataSource.validatePromoCode(code, orderTotal);
     } catch (e) {

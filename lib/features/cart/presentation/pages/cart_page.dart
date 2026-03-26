@@ -54,28 +54,24 @@ class _CartPageState extends State<CartPage> {
           ),
         ],
       ),
-      body: BlocBuilder<CartBloc, CartState>(
-        builder: (context, state) {
-          if (state is CartLoading || state is CartInitial) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
+      body: BlocListener<CartBloc, CartState>(
+        listenWhen: (previous, current) => current is CartError,
+        listener: (context, state) {
           if (state is CartError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 48, color: colorScheme.error),
-                  const SizedBox(height: 12),
-                  Text(state.message, style: textTheme.bodyMedium),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.read<CartBloc>().add(FetchCart()),
-                    child: const Text('Retry'),
-                  ),
-                ],
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: colorScheme.error,
+                behavior: SnackBarBehavior.floating,
               ),
             );
+          }
+        },
+        child: BlocBuilder<CartBloc, CartState>(
+          buildWhen: (previous, current) => current is! CartError,
+          builder: (context, state) {
+            if (state is CartLoading || state is CartInitial) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (state is CartLoaded) {
@@ -88,6 +84,7 @@ class _CartPageState extends State<CartPage> {
           return const SizedBox.shrink();
         },
       ),
+      )
     );
   }
 
@@ -145,28 +142,70 @@ class _CartPageState extends State<CartPage> {
           child: Column(
             children: [
               // Promo code
-              TextField(
-                controller: _promoController,
-                decoration: InputDecoration(
-                  hintText: 'Promo code',
-                  suffixIcon: TextButton(
-                    onPressed: () {
-                      // Promo validation happens in CheckoutBloc
-                      if (_promoController.text.trim().isNotEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Promo code will be applied at checkout',
+              if (state.promoCode != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: colorScheme.primary.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.local_offer_outlined,
+                          size: 18, color: colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Promo Applied',
+                              style: textTheme.labelSmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
                             ),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    },
-                    child: Text('Apply', style: textTheme.labelMedium),
+                            Text(
+                              state.promoCode!.code,
+                              style: textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          context.read<CartBloc>().add(RemovePromoCode());
+                          _promoController.clear();
+                        },
+                        icon: const Icon(Icons.close, size: 18),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  ),
+                )
+              else
+                TextField(
+                  controller: _promoController,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: InputDecoration(
+                    hintText: 'Promo code',
+                    suffixIcon: TextButton(
+                      onPressed: () {
+                        if (_promoController.text.trim().isNotEmpty) {
+                          context.read<CartBloc>().add(
+                                ApplyPromoCode(_promoController.text.trim()),
+                              );
+                        }
+                      },
+                      child: Text('Apply', style: textTheme.labelMedium),
+                    ),
                   ),
                 ),
-              ),
               const SizedBox(height: 16),
 
               // Subtotal row
@@ -199,10 +238,9 @@ class _CartPageState extends State<CartPage> {
                   '/home/cart/checkout',
                   extra: {
                     'cartItems': state.items,
-                    'total': state.total,
-                    'promoCode': _promoController.text.trim().isEmpty
-                        ? null
-                        : _promoController.text.trim(),
+                    'subtotal': state.subtotal,
+                    'promoCode': state.promoCode?.code,
+                    'discountAmount': state.discountAmount,
                   },
                 ),
                 child: const Text('Proceed to Checkout'),

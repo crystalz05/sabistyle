@@ -1,5 +1,6 @@
 import '../../../../core/error/error_mapper.dart';
 import '../../domain/entities/cart_item.dart';
+import '../../domain/entities/promo_code.dart';
 import '../../domain/repositories/cart_repository.dart';
 import '../sources/cart_remote_data_source.dart';
 
@@ -59,6 +60,15 @@ class CartRepositoryImpl implements CartRepository {
   Future<void> clearCart() async {
     try {
       await _remoteDataSource.clearCart();
+    } catch (e) {
+      throw ErrorMapper.fromError(e);
+    }
+  }
+
+  @override
+  Future<PromoCode?> validatePromoCode(String code) async {
+    try {
+      return await _remoteDataSource.validatePromoCode(code);
     } catch (e) {
       throw ErrorMapper.fromError(e);
     }
