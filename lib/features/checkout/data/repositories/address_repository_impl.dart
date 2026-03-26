@@ -13,7 +13,22 @@ class AddressRepositoryImpl implements AddressRepository {
   @override
   Future<List<Address>> fetchAddresses() async {
     try {
-      return await _remoteDataSource.fetchAddresses();
+      final models = await _remoteDataSource.fetchAddresses();
+      // Map models to entities to ensure the runtime list type is precisely List<Address>
+      return models
+          .map(
+            (m) => Address(
+              id: m.id,
+              userId: m.userId,
+              fullName: m.fullName,
+              phone: m.phone,
+              street: m.street,
+              city: m.city,
+              state: m.state,
+              isDefault: m.isDefault,
+            ),
+          )
+          .toList();
     } catch (e) {
       throw ErrorMapper.fromError(e);
     }

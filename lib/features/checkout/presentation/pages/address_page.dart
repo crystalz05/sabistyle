@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/address.dart';
 import '../bloc/address_bloc.dart';
+import '../../../widgets/app_error_widget.dart';
+import '../../../widgets/app_empty_state.dart';
+import '../../../widgets/app_button.dart';
 
 class AddressPage extends StatefulWidget {
   final bool isSelecting;
@@ -53,55 +56,27 @@ class _AddressPageState extends State<AddressPage> {
           }
 
           if (state is AddressError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 48, color: colorScheme.error),
-                  const SizedBox(height: 12),
-                  Text(state.message, style: textTheme.bodyMedium),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () =>
-                        context.read<AddressBloc>().add(FetchAddresses()),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
+            return AppErrorWidget(
+              message: state.message,
+              onRetry: () => context.read<AddressBloc>().add(FetchAddresses()),
             );
           }
 
           if (state is AddressesLoaded) {
             if (state.addresses.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.location_off_outlined,
-                      size: 64,
-                      color: colorScheme.onSurfaceVariant.withValues(
-                        alpha: 0.4,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text('No saved addresses', style: textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Add a delivery address to proceed.',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => _showAddAddressSheet(context),
-                      child: const Text('Add Address'),
-                    ),
-                  ],
+              return AppEmptyState(
+              icon: Icons.location_off_outlined,
+              title: 'No saved addresses',
+              message: 'Add a delivery address to proceed.',
+              actionButton: SizedBox(
+                width: 200,
+                child: AppButton(
+                  text: 'Add Address',
+                  onPressed: () => _showAddAddressSheet(context),
                 ),
-              );
-            }
+              ),
+            );
+          }
 
             return RefreshIndicator(
               onRefresh: () async {
@@ -110,7 +85,7 @@ class _AddressPageState extends State<AddressPage> {
               child: ListView.separated(
                 padding: const EdgeInsets.all(20),
                 itemCount: state.addresses.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                separatorBuilder: (_, index) => const SizedBox(height: 16),
                 itemBuilder: (context, index) {
                   final address = state.addresses[index];
                   return _AddressCard(
@@ -136,9 +111,38 @@ class _AddressPageState extends State<AddressPage> {
       floatingActionButton: BlocBuilder<AddressBloc, AddressState>(
         builder: (context, state) {
           if (state is AddressesLoaded && state.addresses.isNotEmpty) {
-            return FloatingActionButton(
-              onPressed: () => _showAddAddressSheet(context),
-              child: const Icon(Icons.add),
+            return GestureDetector(
+              onTap: () => _showAddAddressSheet(context),
+              child: Container(
+                height: 56,
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add_rounded, color: Colors.white, size: 24),
+                    SizedBox(width: 12),
+                    Text(
+                      'Add Address',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             );
           }
           return const SizedBox.shrink();
@@ -418,7 +422,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
               title: const Text('Set as default address'),
               value: _isDefault,
               onChanged: (v) => setState(() => _isDefault = v),
-              activeColor: colorScheme.primary,
+              activeThumbColor: colorScheme.primary,
             ),
             const SizedBox(height: 24),
             ElevatedButton(

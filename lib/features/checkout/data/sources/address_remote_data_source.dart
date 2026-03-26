@@ -32,13 +32,16 @@ class AddressRemoteDataSourceImpl implements AddressRemoteDataSource {
 
   @override
   Future<AddressModel> addAddress(AddressModel address) async {
+    final data = address.toJson();
+    data['user_id'] = _userId; // Ensure valid UUID from session
+
     final response = await _client
         .from('addresses')
-        .insert(address.toJson())
+        .insert(data)
         .select()
         .single();
 
-    return AddressModel.fromJson(response as Map<String, dynamic>);
+    return AddressModel.fromJson(response);
   }
 
   @override

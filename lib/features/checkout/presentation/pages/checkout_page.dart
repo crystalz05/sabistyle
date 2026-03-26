@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../injection_container.dart';
 import '../../../cart/domain/entities/cart_item.dart';
 import '../../domain/entities/address.dart';
 import '../../domain/entities/order_item.dart';
@@ -53,7 +52,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Checkout', style: textTheme.titleMedium)),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          onPressed: () => context.pop(),
+        ),
+        title: Text('Checkout', style: textTheme.titleMedium),
+        centerTitle: true,
+      ),
       body: BlocListener<CheckoutBloc, CheckoutState>(
         listener: (context, state) {
           if (state is PromoApplied) {
@@ -234,10 +240,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
             state.addresses.isNotEmpty &&
             _selectedAddress == null) {
           setState(() {
-            _selectedAddress = state.addresses.firstWhere(
-              (a) => a.isDefault,
-              orElse: () => state.addresses.first,
-            );
+            _selectedAddress = state.addresses.any((a) => a.isDefault)
+                ? state.addresses.firstWhere((a) => a.isDefault)
+                : state.addresses.first;
           });
         }
       },
@@ -283,7 +288,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return GestureDetector(
       onTap: () async {
         final selected = await context.push<Address>(
-          '/home/profile/addresses?selecting=true',
+          '/home/addresses?selecting=true',
         );
         if (selected != null) {
           setState(() => _selectedAddress = selected);

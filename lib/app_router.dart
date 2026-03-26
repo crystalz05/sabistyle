@@ -63,7 +63,7 @@ abstract final class AppRoutes {
   static const orderConfirmation = '/home/cart/checkout/confirmation';
   static const orders = '/home/orders';
   static const profile = '/home/profile';
-  static const addresses = '/home/profile/addresses';
+  static const addresses = '/home/addresses';
 }
 
 /// Creates a [GoRouter] instance wired to [AuthBloc].
@@ -321,20 +321,20 @@ GoRouter createRouter(AuthBloc authBloc) {
               GoRoute(
                 path: AppRoutes.profile,
                 builder: (context, state) => const ProfilePage(),
-                routes: [
-                  GoRoute(
-                    path: 'addresses',
-                    builder: (context, state) {
-                      final isSelecting =
-                          state.uri.queryParameters['selecting'] == 'true';
-                      return AddressPage(isSelecting: isSelecting);
-                    },
-                  ),
-                ],
               ),
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: AppRoutes.addresses,
+        builder: (context, state) {
+          final isSelecting = state.uri.queryParameters['selecting'] == 'true';
+          return BlocProvider.value(
+            value: GetIt.I<AddressBloc>(),
+            child: AddressPage(isSelecting: isSelecting),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.cart,
@@ -343,12 +343,11 @@ GoRouter createRouter(AuthBloc authBloc) {
           child: const CartPage(),
         ),
         routes: [
-          GoRoute(
-            path: 'checkout',
-            builder: (context, state) {
-              final extra = state.extra as Map<String, dynamic>;
+          ShellRoute(
+            builder: (context, state, child) {
               return MultiBlocProvider(
                 providers: [
+                  BlocProvider.value(value: GetIt.I<CartBloc>()),
                   BlocProvider(
                     create: (_) => GetIt.I<AddressBloc>(),
                   ),
@@ -356,33 +355,42 @@ GoRouter createRouter(AuthBloc authBloc) {
                     create: (_) => GetIt.I<CheckoutBloc>(),
                   ),
                 ],
-                child: CheckoutPage(
-                  cartItems: extra['cartItems'] as List<CartItem>,
-                  subtotal: extra['total'] as double,
-                  initialPromoCode: extra['promoCode'] as String?,
-                ),
+                child: child,
               );
             },
             routes: [
               GoRoute(
-                path: 'payment',
+                path: 'checkout',
                 builder: (context, state) {
                   final extra = state.extra as Map<String, dynamic>;
-                  return PaymentPage(
-                    addressId: extra['addressId'] as String,
-                    items: extra['items'] as List<OrderItem>,
-                    totalAmount: extra['totalAmount'] as double,
-                    discountAmount: extra['discountAmount'] as double,
-                    promoCodeId: extra['promoCodeId'] as String?,
+                  return CheckoutPage(
+                    cartItems: extra['cartItems'] as List<CartItem>,
+                    subtotal: extra['total'] as double,
+                    initialPromoCode: extra['promoCode'] as String?,
                   );
                 },
-              ),
-              GoRoute(
-                path: 'confirmation',
-                builder: (context, state) {
-                  final orderId = state.extra as String;
-                  return OrderConfirmationPage(orderId: orderId);
-                },
+                routes: [
+                  GoRoute(
+                    path: 'payment',
+                    builder: (context, state) {
+                      final extra = state.extra as Map<String, dynamic>;
+                      return PaymentPage(
+                        addressId: extra['addressId'] as String,
+                        items: extra['items'] as List<OrderItem>,
+                        totalAmount: extra['totalAmount'] as double,
+                        discountAmount: extra['discountAmount'] as double,
+                        promoCodeId: extra['promoCodeId'] as String?,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'confirmation',
+                    builder: (context, state) {
+                      final orderId = state.extra as String;
+                      return OrderConfirmationPage(orderId: orderId);
+                    },
+                  ),
+                ],
               ),
             ],
           ),
