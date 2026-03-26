@@ -115,6 +115,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<UpdateCartItemQuantity>(_onUpdateQuantity);
     on<RemoveFromCart>(_onRemoveFromCart);
     on<ClearCart>(_onClearCart);
+
+    // Pre-load cart so the badge count is correct from the start.
+    add(FetchCart());
   }
 
   Future<void> _onFetchCart(FetchCart event, Emitter<CartState> emit) async {
@@ -128,7 +131,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   Future<void> _onAddToCart(AddToCart event, Emitter<CartState> emit) async {
-    emit(CartLoading());
+    // Preserve current items while inserting to avoid jarring spinner.
+    final previousState = state is CartLoaded ? state as CartLoaded : null;
     try {
       await _repository.addItem(
         productId: event.productId,
@@ -136,7 +140,13 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         size: event.size,
         color: event.color,
       );
-      add(FetchCart()); // Refresh to get server-confirmed state
+      // Directly fetch updated list without emitting a loading flash.
+      final items = await _repository.fetchCart();
+      emit(CartLoaded(
+        items: items,
+        promoCode: previousState?.promoCode,
+        discountAmount: previousState?.discountAmount ?? 0,
+      ));
     } catch (e) {
       emit(CartError(e.toString()));
     }

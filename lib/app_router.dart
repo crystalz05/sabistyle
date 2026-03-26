@@ -32,6 +32,8 @@ import 'features/checkout/presentation/pages/address_page.dart';
 import 'features/checkout/presentation/pages/checkout_page.dart';
 import 'features/checkout/presentation/pages/payment_page.dart';
 import 'features/checkout/presentation/pages/order_confirmation_page.dart';
+import 'features/checkout/presentation/bloc/address_bloc.dart';
+import 'features/checkout/presentation/bloc/checkout_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/checkout/domain/entities/order_item.dart';
 import 'features/cart/domain/entities/cart_item.dart';
@@ -263,29 +265,6 @@ GoRouter createRouter(AuthBloc authBloc) {
                     ),
                   ),
                   GoRoute(
-                    path: 'product/:productId',
-                    builder: (context, state) {
-                      final productId = state.pathParameters['productId']!;
-                      return MultiBlocProvider(
-                        providers: [
-                          BlocProvider(
-                            create: (context) => GetIt.I<ProductBloc>(),
-                          ),
-                          BlocProvider(
-                            create: (context) => GetIt.I<ReviewBloc>(),
-                          ),
-                          BlocProvider(
-                            create: (context) => GetIt.I<WishlistBloc>(),
-                          ),
-                          BlocProvider.value(
-                            value: GetIt.I<CartBloc>(),
-                          ),
-                        ],
-                        child: ProductDetailPage(productId: productId),
-                      );
-                    },
-                  ),
-                  GoRoute(
                     path: ':categoryId',
                     builder: (context, state) {
                       final categoryId = state.pathParameters['categoryId']!;
@@ -368,10 +347,20 @@ GoRouter createRouter(AuthBloc authBloc) {
             path: 'checkout',
             builder: (context, state) {
               final extra = state.extra as Map<String, dynamic>;
-              return CheckoutPage(
-                cartItems: extra['cartItems'] as List<CartItem>,
-                subtotal: extra['total'] as double,
-                initialPromoCode: extra['promoCode'] as String?,
+              return MultiBlocProvider(
+                providers: [
+                  BlocProvider(
+                    create: (_) => GetIt.I<AddressBloc>(),
+                  ),
+                  BlocProvider(
+                    create: (_) => GetIt.I<CheckoutBloc>(),
+                  ),
+                ],
+                child: CheckoutPage(
+                  cartItems: extra['cartItems'] as List<CartItem>,
+                  subtotal: extra['total'] as double,
+                  initialPromoCode: extra['promoCode'] as String?,
+                ),
               );
             },
             routes: [
@@ -398,6 +387,29 @@ GoRouter createRouter(AuthBloc authBloc) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/home/market/product/:productId',
+        builder: (context, state) {
+          final productId = state.pathParameters['productId']!;
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => GetIt.I<ProductBloc>(),
+              ),
+              BlocProvider(
+                create: (_) => GetIt.I<ReviewBloc>(),
+              ),
+              BlocProvider(
+                create: (_) => GetIt.I<WishlistBloc>(),
+              ),
+              BlocProvider.value(
+                value: GetIt.I<CartBloc>(),
+              ),
+            ],
+            child: ProductDetailPage(productId: productId),
+          );
+        },
       ),
     ],
 
