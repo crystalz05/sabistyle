@@ -4,12 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../injection_container.dart';
 import '../../../widgets/app_error_widget.dart';
+import '../../../widgets/product_card.dart';
 import '../../domain/entities/product.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
-import '../widgets/product_card.dart';
 import '../../../cart/presentation/bloc/cart_bloc.dart';
+import '../../../wishlist/presentation/bloc/wishlist_bloc.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -326,7 +327,26 @@ class _HomePageState extends State<HomePage> {
         return ProductCard(
           product: product,
           onTap: () => context.push('/home/market/product/${product.id}'),
-          onFavoriteTap: () {},
+          onFavoriteTap: () {
+            final wishlistState = context.read<WishlistBloc>().state;
+            Set<String> ids = {};
+            if (wishlistState is WishlistLoaded) ids = wishlistState.wishlistedProductIds;
+            if (wishlistState is WishlistIdsLoaded) ids = wishlistState.wishlistedProductIds;
+
+            if (ids.contains(product.id)) {
+              // Find the wishlist ID to remove — fall back to a re-add which the repo ignores
+              if (wishlistState is WishlistLoaded) {
+                final item = wishlistState.items
+                    .where((i) => i.product.id == product.id)
+                    .firstOrNull;
+                if (item != null) {
+                  context.read<WishlistBloc>().add(RemoveFromWishlist(item.wishlistId));
+                  return;
+                }
+              }
+            }
+            context.read<WishlistBloc>().add(AddToWishlist(product.id));
+          },
         );
       },
     );

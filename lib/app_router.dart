@@ -207,15 +207,29 @@ GoRouter createRouter(AuthBloc authBloc) {
             routes: [
               GoRoute(
                 path: AppRoutes.home,
-                builder: (context, state) => BlocProvider.value(
-                  value: GetIt.I<CartBloc>(),
+                builder: (context, state) => MultiBlocProvider(
+                  providers: [
+                    BlocProvider.value(value: GetIt.I<CartBloc>()),
+                    BlocProvider(
+                      create: (_) => GetIt.I<WishlistBloc>()
+                        ..add(LoadWishlistedIds()),
+                    ),
+                  ],
                   child: const HomePage(),
                 ),
                 routes: [
                   GoRoute(
                     path: 'search',
-                    builder: (context, state) => BlocProvider(
-                      create: (context) => GetIt.I<SearchBloc>(),
+                    builder: (context, state) => MultiBlocProvider(
+                      providers: [
+                        BlocProvider(
+                          create: (_) => GetIt.I<SearchBloc>(),
+                        ),
+                        BlocProvider(
+                          create: (_) => GetIt.I<WishlistBloc>()
+                            ..add(LoadWishlistedIds()),
+                        ),
+                      ],
                       child: const SearchPage(),
                     ),
                   ),
@@ -235,8 +249,16 @@ GoRouter createRouter(AuthBloc authBloc) {
                   // Literal routes MUST come before wildcard :categoryId
                   GoRoute(
                     path: 'search',
-                    builder: (context, state) => BlocProvider(
-                      create: (context) => GetIt.I<SearchBloc>(),
+                    builder: (context, state) => MultiBlocProvider(
+                      providers: [
+                        BlocProvider(
+                          create: (_) => GetIt.I<SearchBloc>(),
+                        ),
+                        BlocProvider(
+                          create: (_) => GetIt.I<WishlistBloc>()
+                            ..add(LoadWishlistedIds()),
+                        ),
+                      ],
                       child: const SearchPage(),
                     ),
                   ),
@@ -269,8 +291,17 @@ GoRouter createRouter(AuthBloc authBloc) {
                       final categoryId = state.pathParameters['categoryId']!;
                       final categoryName =
                           state.uri.queryParameters['name'] ?? 'Products';
-                      return BlocProvider(
-                        create: (context) => GetIt.I<ProductBloc>(),
+                      return MultiBlocProvider(
+                        providers: [
+                          BlocProvider(
+                            create: (_) => GetIt.I<ProductBloc>(),
+                          ),
+                          BlocProvider(
+                            create: (_) => GetIt.I<WishlistBloc>()
+                              ..add(LoadWishlistedIds()),
+                          ),
+                          BlocProvider.value(value: GetIt.I<CartBloc>()),
+                        ],
                         child: ProductListingPage(
                           categoryId: categoryId,
                           categoryName: categoryName,
@@ -286,8 +317,13 @@ GoRouter createRouter(AuthBloc authBloc) {
             routes: [
               GoRoute(
                 path: AppRoutes.wishlist,
-                builder: (context, state) => BlocProvider(
-                  create: (context) => GetIt.I<WishlistBloc>(),
+                builder: (context, state) => MultiBlocProvider(
+                  providers: [
+                    BlocProvider(
+                      create: (_) => GetIt.I<WishlistBloc>(),
+                    ),
+                    BlocProvider.value(value: GetIt.I<CartBloc>()),
+                  ],
                   child: const WishlistPage(),
                 ),
               ),
