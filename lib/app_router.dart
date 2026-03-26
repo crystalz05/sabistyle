@@ -25,7 +25,6 @@ import 'features/home/presentation/bloc/search_bloc.dart';
 import 'features/orders/presentation/pages/orders_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'features/wishlist/presentation/pages/wishlist_page.dart';
-import 'features/wishlist/presentation/bloc/wishlist_bloc.dart';
 import 'features/cart/presentation/pages/cart_page.dart';
 import 'features/cart/presentation/bloc/cart_bloc.dart';
 import 'features/checkout/presentation/pages/address_page.dart';
@@ -63,7 +62,7 @@ abstract final class AppRoutes {
   static const orderConfirmation = '/home/cart/checkout/confirmation';
   static const orders = '/home/orders';
   static const profile = '/home/profile';
-  static const addresses = '/home/addresses';
+  static const addresses = '/home/profile/addresses';
 }
 
 /// Creates a [GoRouter] instance wired to [AuthBloc].
@@ -207,36 +206,76 @@ GoRouter createRouter(AuthBloc authBloc) {
         branches: [
           StatefulShellBranch(
             routes: [
-              GoRoute(
-                path: AppRoutes.home,
-                builder: (context, state) => MultiBlocProvider(
-                  providers: [
-                    BlocProvider.value(value: GetIt.I<CartBloc>()),
-                    BlocProvider(
-                      create: (_) => GetIt.I<WishlistBloc>()
-                        ..add(LoadWishlistedIds()),
-                    ),
-                  ],
-                  child: const HomePage(),
-                ),
-                routes: [
-                  GoRoute(
-                    path: 'search',
-                    builder: (context, state) => MultiBlocProvider(
-                      providers: [
-                        BlocProvider(
-                          create: (_) => GetIt.I<SearchBloc>(),
-                        ),
-                        BlocProvider(
-                          create: (_) => GetIt.I<WishlistBloc>()
-                            ..add(LoadWishlistedIds()),
-                        ),
-                      ],
-                      child: const SearchPage(),
-                    ),
-                  ),
-                ],
-              ),
+               GoRoute(
+                 path: AppRoutes.home,
+                 builder: (context, state) => const HomePage(),
+                 routes: [
+                   GoRoute(
+                     path: 'search',
+                     builder: (context, state) => BlocProvider(
+                       create: (_) => GetIt.I<SearchBloc>(),
+                       child: const SearchPage(),
+                     ),
+                   ),
+                   GoRoute(
+                     path: 'cart',
+                     builder: (context, state) => const CartPage(),
+                     routes: [
+                       ShellRoute(
+                         builder: (context, state, child) {
+                           return MultiBlocProvider(
+                             providers: [
+                               BlocProvider.value(value: GetIt.I<CartBloc>()),
+                               BlocProvider(
+                                 create: (_) => GetIt.I<AddressBloc>(),
+                               ),
+                               BlocProvider(
+                                 create: (_) => GetIt.I<CheckoutBloc>(),
+                               ),
+                             ],
+                             child: child,
+                           );
+                         },
+                         routes: [
+                           GoRoute(
+                             path: 'checkout',
+                             builder: (context, state) {
+                               final extra = state.extra as Map<String, dynamic>;
+                               return CheckoutPage(
+                                 cartItems: extra['cartItems'] as List<CartItem>,
+                                 subtotal: extra['total'] as double,
+                                 initialPromoCode: extra['promoCode'] as String?,
+                               );
+                             },
+                             routes: [
+                               GoRoute(
+                                 path: 'payment',
+                                 builder: (context, state) {
+                                   final extra = state.extra as Map<String, dynamic>;
+                                   return PaymentPage(
+                                     addressId: extra['addressId'] as String,
+                                     items: extra['items'] as List<OrderItem>,
+                                     totalAmount: extra['totalAmount'] as double,
+                                     discountAmount: extra['discountAmount'] as double,
+                                     promoCodeId: extra['promoCodeId'] as String?,
+                                   );
+                                 },
+                               ),
+                               GoRoute(
+                                 path: 'confirmation',
+                                 builder: (context, state) {
+                                   final orderId = state.extra as String;
+                                   return OrderConfirmationPage(orderId: orderId);
+                                 },
+                               ),
+                             ],
+                           ),
+                         ],
+                       ),
+                     ],
+                   ),
+                 ],
+               ),
             ],
           ),
           StatefulShellBranch(
@@ -251,18 +290,27 @@ GoRouter createRouter(AuthBloc authBloc) {
                   // Literal routes MUST come before wildcard :categoryId
                   GoRoute(
                     path: 'search',
-                    builder: (context, state) => MultiBlocProvider(
-                      providers: [
-                        BlocProvider(
-                          create: (_) => GetIt.I<SearchBloc>(),
-                        ),
-                        BlocProvider(
-                          create: (_) => GetIt.I<WishlistBloc>()
-                            ..add(LoadWishlistedIds()),
-                        ),
-                      ],
+                    builder: (context, state) => BlocProvider(
+                      create: (_) => GetIt.I<SearchBloc>(),
                       child: const SearchPage(),
                     ),
+                  ),
+                  GoRoute(
+                    path: 'product/:productId',
+                    builder: (context, state) {
+                      final productId = state.pathParameters['productId']!;
+                      return MultiBlocProvider(
+                        providers: [
+                          BlocProvider(
+                            create: (_) => GetIt.I<ProductBloc>(),
+                          ),
+                          BlocProvider(
+                            create: (_) => GetIt.I<ReviewBloc>(),
+                          ),
+                        ],
+                        child: ProductDetailPage(productId: productId),
+                      );
+                    },
                   ),
                   GoRoute(
                     path: ':categoryId',
@@ -270,17 +318,8 @@ GoRouter createRouter(AuthBloc authBloc) {
                       final categoryId = state.pathParameters['categoryId']!;
                       final categoryName =
                           state.uri.queryParameters['name'] ?? 'Products';
-                      return MultiBlocProvider(
-                        providers: [
-                          BlocProvider(
-                            create: (_) => GetIt.I<ProductBloc>(),
-                          ),
-                          BlocProvider(
-                            create: (_) => GetIt.I<WishlistBloc>()
-                              ..add(LoadWishlistedIds()),
-                          ),
-                          BlocProvider.value(value: GetIt.I<CartBloc>()),
-                        ],
+                      return BlocProvider(
+                        create: (_) => GetIt.I<ProductBloc>(),
                         child: ProductListingPage(
                           categoryId: categoryId,
                           categoryName: categoryName,
@@ -296,15 +335,7 @@ GoRouter createRouter(AuthBloc authBloc) {
             routes: [
               GoRoute(
                 path: AppRoutes.wishlist,
-                builder: (context, state) => MultiBlocProvider(
-                  providers: [
-                    BlocProvider(
-                      create: (_) => GetIt.I<WishlistBloc>(),
-                    ),
-                    BlocProvider.value(value: GetIt.I<CartBloc>()),
-                  ],
-                  child: const WishlistPage(),
-                ),
+                builder: (context, state) => const WishlistPage(),
               ),
             ],
           ),
@@ -321,103 +352,23 @@ GoRouter createRouter(AuthBloc authBloc) {
               GoRoute(
                 path: AppRoutes.profile,
                 builder: (context, state) => const ProfilePage(),
-              ),
-            ],
-          ),
-        ],
-      ),
-      GoRoute(
-        path: AppRoutes.addresses,
-        builder: (context, state) {
-          final isSelecting = state.uri.queryParameters['selecting'] == 'true';
-          return BlocProvider.value(
-            value: GetIt.I<AddressBloc>(),
-            child: AddressPage(isSelecting: isSelecting),
-          );
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.cart,
-        builder: (context, state) => BlocProvider.value(
-          value: GetIt.I<CartBloc>(),
-          child: const CartPage(),
-        ),
-        routes: [
-          ShellRoute(
-            builder: (context, state, child) {
-              return MultiBlocProvider(
-                providers: [
-                  BlocProvider.value(value: GetIt.I<CartBloc>()),
-                  BlocProvider(
-                    create: (_) => GetIt.I<AddressBloc>(),
-                  ),
-                  BlocProvider(
-                    create: (_) => GetIt.I<CheckoutBloc>(),
-                  ),
-                ],
-                child: child,
-              );
-            },
-            routes: [
-              GoRoute(
-                path: 'checkout',
-                builder: (context, state) {
-                  final extra = state.extra as Map<String, dynamic>;
-                  return CheckoutPage(
-                    cartItems: extra['cartItems'] as List<CartItem>,
-                    subtotal: extra['total'] as double,
-                    initialPromoCode: extra['promoCode'] as String?,
-                  );
-                },
                 routes: [
                   GoRoute(
-                    path: 'payment',
+                    path: 'addresses',
                     builder: (context, state) {
-                      final extra = state.extra as Map<String, dynamic>;
-                      return PaymentPage(
-                        addressId: extra['addressId'] as String,
-                        items: extra['items'] as List<OrderItem>,
-                        totalAmount: extra['totalAmount'] as double,
-                        discountAmount: extra['discountAmount'] as double,
-                        promoCodeId: extra['promoCodeId'] as String?,
+                      final isSelecting =
+                          state.uri.queryParameters['selecting'] == 'true';
+                      return BlocProvider.value(
+                        value: GetIt.I<AddressBloc>(),
+                        child: AddressPage(isSelecting: isSelecting),
                       );
                     },
                   ),
-                  GoRoute(
-                    path: 'confirmation',
-                    builder: (context, state) {
-                      final orderId = state.extra as String;
-                      return OrderConfirmationPage(orderId: orderId);
-                    },
-                  ),
                 ],
               ),
             ],
           ),
         ],
-      ),
-      GoRoute(
-        path: '/home/market/product/:productId',
-        builder: (context, state) {
-          final productId = state.pathParameters['productId']!;
-          return MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) => GetIt.I<ProductBloc>(),
-              ),
-              BlocProvider(
-                create: (_) => GetIt.I<ReviewBloc>(),
-              ),
-              BlocProvider(
-                create: (_) => GetIt.I<WishlistBloc>(),
-              ),
-              BlocProvider.value(
-                value: GetIt.I<CartBloc>(),
-              ),
-            ],
-            child: ProductDetailPage(productId: productId),
-          );
-        },
       ),
     ],
 

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../cart/presentation/bloc/cart_bloc.dart';
+import '../../../wishlist/presentation/bloc/wishlist_bloc.dart';
+import '../../../../injection_container.dart';
 
 class MainNavigationShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -20,9 +24,18 @@ class MainNavigationShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: Container(
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => sl<WishlistBloc>()..add(LoadWishlistedIds()),
+        ),
+        BlocProvider(
+          create: (_) => sl<CartBloc>()..add(FetchCart()),
+        ),
+      ],
+      child: Scaffold(
+        body: navigationShell,
+        bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: const BorderRadius.only(
@@ -84,8 +97,9 @@ class MainNavigationShell extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _NavBarItem extends StatelessWidget {

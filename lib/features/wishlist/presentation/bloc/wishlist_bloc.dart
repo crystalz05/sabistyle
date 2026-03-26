@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/wishlist_item.dart';
 import '../../domain/repositories/wishlist_repository.dart';
+import '../../../home/domain/entities/product.dart';
 
 // ── Events ────────────────────────────────────────────────────────────────────
 
@@ -23,9 +24,17 @@ class AddToWishlist extends WishlistEvent {
 
 class RemoveFromWishlist extends WishlistEvent {
   final String wishlistId;
-  const RemoveFromWishlist(this.wishlistId);
+  final String? productId;
+  const RemoveFromWishlist(this.wishlistId, {this.productId});
   @override
-  List<Object?> get props => [wishlistId];
+  List<Object?> get props => [wishlistId, productId];
+}
+
+class ToggleWishlist extends WishlistEvent {
+  final Product product;
+  const ToggleWishlist(this.product);
+  @override
+  List<Object?> get props => [product];
 }
 
 class LoadWishlistedIds extends WishlistEvent {}
@@ -49,19 +58,22 @@ class WishlistLoaded extends WishlistState {
   final Set<String> wishlistedProductIds;
 
   const WishlistLoaded({
-    required this.items,
-    required this.wishlistedProductIds,
+    this.items = const [],
+    this.wishlistedProductIds = const {},
   });
+
+  WishlistLoaded copyWith({
+    List<WishlistItem>? items,
+    Set<String>? wishlistedProductIds,
+  }) {
+    return WishlistLoaded(
+      items: items ?? this.items,
+      wishlistedProductIds: wishlistedProductIds ?? this.wishlistedProductIds,
+    );
+  }
 
   @override
   List<Object?> get props => [items, wishlistedProductIds];
-}
-
-class WishlistIdsLoaded extends WishlistState {
-  final Set<String> wishlistedProductIds;
-  const WishlistIdsLoaded(this.wishlistedProductIds);
-  @override
-  List<Object?> get props => [wishlistedProductIds];
 }
 
 class WishlistError extends WishlistState {
@@ -82,6 +94,7 @@ class WishlistBloc extends Bloc<WishlistEvent, WishlistState> {
     on<FetchWishlist>(_onFetchWishlist);
     on<AddToWishlist>(_onAddToWishlist);
     on<RemoveFromWishlist>(_onRemoveFromWishlist);
+    on<ToggleWishlist>(_onToggleWishlist);
     on<LoadWishlistedIds>(_onLoadWishlistedIds);
   }
 
@@ -89,7 +102,10 @@ class WishlistBloc extends Bloc<WishlistEvent, WishlistState> {
     FetchWishlist event,
     Emitter<WishlistState> emit,
   ) async {
-    emit(WishlistLoading());
+    // Only show loading if we have no data yet
+    if (state is! WishlistLoaded || (state as WishlistLoaded).items.isEmpty) {
+      emit(WishlistLoading());
+    }
     try {
       final items = await _repository.fetchWishlist();
       final ids = items.map((e) => e.product.id).toSet();
@@ -103,12 +119,24 @@ class WishlistBloc extends Bloc<WishlistEvent, WishlistState> {
     AddToWishlist event,
     Emitter<WishlistState> emit,
   ) async {
+    final previousState = state;
+    if (state is WishlistLoaded) {
+      final current = state as WishlistLoaded;
+      final updatedIds = Set<String>.from(current.wishlistedProductIds)
+        ..add(event.productId);
+      emit(current.copyWith(wishlistedProductIds: updatedIds));
+    } else {
+      emit(WishlistLoaded(wishlistedProductIds: {event.productId}));
+    }
+
     try {
       await _repository.addToWishlist(event.productId);
-      // Refresh the full list so the new item appears.
-      add(FetchWishlist());
+      final items = await _repository.fetchWishlist();
+      final ids = items.map((e) => e.product.id).toSet();
+      emit(WishlistLoaded(items: items, wishlistedProductIds: ids));
     } catch (e) {
       emit(WishlistError(e.toString()));
+      emit(previousState);
     }
   }
 
@@ -116,21 +144,57 @@ class WishlistBloc extends Bloc<WishlistEvent, WishlistState> {
     RemoveFromWishlist event,
     Emitter<WishlistState> emit,
   ) async {
-    // Optimistic removal — update state immediately, then sync.
+    final previousState = state;
     if (state is WishlistLoaded) {
       final current = state as WishlistLoaded;
-      final updatedItems = current.items
-          .where((i) => i.wishlistId != event.wishlistId)
-          .toList();
+      final updatedItems = current.items.where((i) {
+        if (event.productId != null) {
+          return i.product.id != event.productId;
+        }
+        return i.wishlistId != event.wishlistId;
+      }).toList();
       final updatedIds = updatedItems.map((e) => e.product.id).toSet();
-      emit(
-        WishlistLoaded(items: updatedItems, wishlistedProductIds: updatedIds),
-      );
+      if (updatedIds.length == current.wishlistedProductIds.length && event.productId != null) {
+         updatedIds.remove(event.productId);
+      }
+      emit(current.copyWith(items: updatedItems, wishlistedProductIds: updatedIds));
     }
+
     try {
-      await _repository.removeFromWishlist(event.wishlistId);
+      if (event.wishlistId.isNotEmpty) {
+        await _repository.removeFromWishlist(event.wishlistId);
+      } else if (event.productId != null) {
+        final items = await _repository.fetchWishlist();
+        final item = items.firstWhere((i) => i.product.id == event.productId);
+        await _repository.removeFromWishlist(item.wishlistId);
+      }
     } catch (e) {
       emit(WishlistError(e.toString()));
+      emit(previousState);
+    }
+  }
+
+  Future<void> _onToggleWishlist(
+    ToggleWishlist event,
+    Emitter<WishlistState> emit,
+  ) async {
+    final productId = event.product.id;
+    Set<String> currentIds = {};
+    if (state is WishlistLoaded) {
+      currentIds = (state as WishlistLoaded).wishlistedProductIds;
+    }
+
+    if (currentIds.contains(productId)) {
+      String? wishlistId;
+      if (state is WishlistLoaded) {
+        final items = (state as WishlistLoaded).items;
+        try {
+          wishlistId = items.firstWhere((i) => i.product.id == productId).wishlistId;
+        } catch (_) {}
+      }
+      add(RemoveFromWishlist(wishlistId ?? '', productId: productId));
+    } else {
+      add(AddToWishlist(productId));
     }
   }
 
@@ -140,9 +204,11 @@ class WishlistBloc extends Bloc<WishlistEvent, WishlistState> {
   ) async {
     try {
       final ids = await _repository.getWishlistedProductIds();
-      emit(WishlistIdsLoaded(ids));
-    } catch (_) {
-      // Silent fail — wishlist ids are a UX nicety, not critical.
-    }
+      if (state is WishlistLoaded) {
+        emit((state as WishlistLoaded).copyWith(wishlistedProductIds: ids));
+      } else {
+        emit(WishlistLoaded(wishlistedProductIds: ids));
+      }
+    } catch (_) {}
   }
 }

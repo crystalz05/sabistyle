@@ -68,15 +68,14 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
                 // Favorite button
-                if (onFavoriteTap != null)
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: _FavoriteButton(
-                      productId: product.id,
-                      onTap: onFavoriteTap!,
-                    ),
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: _FavoriteButton(
+                    product: product,
+                    onTap: onFavoriteTap,
                   ),
+                ),
               ],
             ),
 
@@ -164,27 +163,28 @@ class ProductCard extends StatelessWidget {
 
 /// Heart button that reads wishlist state to show filled/unfilled icon.
 class _FavoriteButton extends StatelessWidget {
-  final String productId;
-  final VoidCallback onTap;
+  final Product product;
+  final VoidCallback? onTap;
 
-  const _FavoriteButton({required this.productId, required this.onTap});
+  const _FavoriteButton({required this.product, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return BlocBuilder<WishlistBloc, WishlistState>(
-      buildWhen: (prev, curr) =>
-          curr is WishlistLoaded || curr is WishlistIdsLoaded,
+      buildWhen: (prev, curr) => curr is WishlistLoaded,
       builder: (context, state) {
-        Set<String> ids = {};
-        if (state is WishlistLoaded) ids = state.wishlistedProductIds;
-        if (state is WishlistIdsLoaded) ids = state.wishlistedProductIds;
+        final ids = (state is WishlistLoaded)
+            ? state.wishlistedProductIds
+            : <String>{};
 
-        final isFav = ids.contains(productId);
+        final isFav = ids.contains(product.id);
 
         return GestureDetector(
-          onTap: onTap,
+          onTap: onTap ?? () {
+            context.read<WishlistBloc>().add(ToggleWishlist(product));
+          },
           child: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(

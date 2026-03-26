@@ -16,6 +16,6 @@ void registerWishlistDependencies(GetIt sl) {
     () => WishlistRepositoryImpl(remoteDataSource: sl()),
   );
 
-  // Bloc — factory so each page gets its own instance
-  sl.registerFactory(() => WishlistBloc(repository: sl()));
+  // Singleton so favorites and lists stay in sync across all pages
+  sl.registerLazySingleton(() => WishlistBloc(repository: sl()));
 }

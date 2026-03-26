@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../widgets/cart_badge_icon.dart';
 import '../../../cart/presentation/bloc/cart_bloc.dart';
 import '../../../widgets/app_error_widget.dart';
 import '../../../widgets/product_card.dart';
@@ -29,10 +30,20 @@ class _WishlistPageState extends State<WishlistPage> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text('My Wishlist', style: textTheme.titleMedium)),
+      appBar: AppBar(
+        title: Text('My Wishlist', style: textTheme.titleMedium),
+        actions: const [
+          CartBadgeIcon(),
+          SizedBox(width: 8),
+        ],
+      ),
       body: BlocBuilder<WishlistBloc, WishlistState>(
         builder: (context, state) {
-          if (state is WishlistLoading || state is WishlistInitial) {
+          if (state is WishlistInitial) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is WishlistLoading && (state is! WishlistLoaded || (state as WishlistLoaded).items.isEmpty)) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -70,32 +81,31 @@ class _WishlistPageState extends State<WishlistPage> {
                     product: product,
                     onTap: () =>
                         context.push('/home/market/product/${product.id}'),
-                    onFavoriteTap: () => context
-                        .read<WishlistBloc>()
-                        .add(RemoveFromWishlist(item.wishlistId)),
                     onAddToCart: () {
-                      if (product.sizes.isEmpty && product.colors.isEmpty) {
-                        context.read<CartBloc>().add(
-                              AddToCart(
-                                productId: product.id,
-                                quantity: 1,
-                                size: '',
-                                color: '',
-                              ),
-                            );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Added ${product.name} to cart!'),
-                            behavior: SnackBarBehavior.floating,
-                            action: SnackBarAction(
-                              label: 'VIEW CART',
-                              onPressed: () => context.push('/home/cart'),
+                      final size =
+                          product.sizes.isNotEmpty ? product.sizes.first : '';
+                      final color =
+                          product.colors.isNotEmpty ? product.colors.first : '';
+
+                      context.read<CartBloc>().add(
+                            AddToCart(
+                              productId: product.id,
+                              quantity: 1,
+                              size: size,
+                              color: color,
                             ),
+                          );
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Added ${product.name} to cart!'),
+                          behavior: SnackBarBehavior.floating,
+                          action: SnackBarAction(
+                            label: 'VIEW CART',
+                            onPressed: () => context.push('/home/cart'),
                           ),
-                        );
-                      } else {
-                        context.push('/home/market/product/${product.id}');
-                      }
+                        ),
+                      );
                     },
                   );
                 },

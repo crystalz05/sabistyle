@@ -79,32 +79,7 @@ class _ProductListingPageState extends State<ProductListingPage> {
                   onTap: () =>
                       context.push('/home/market/product/${product.id}'),
                   onFavoriteTap: () {
-                    final wishlistState =
-                        context.read<WishlistBloc>().state;
-                    Set<String> ids = {};
-                    if (wishlistState is WishlistLoaded) {
-                      ids = wishlistState.wishlistedProductIds;
-                    }
-                    if (wishlistState is WishlistIdsLoaded) {
-                      ids = wishlistState.wishlistedProductIds;
-                    }
-
-                    if (ids.contains(product.id)) {
-                      if (wishlistState is WishlistLoaded) {
-                        final item = wishlistState.items
-                            .where((i) => i.product.id == product.id)
-                            .firstOrNull;
-                        if (item != null) {
-                          context
-                              .read<WishlistBloc>()
-                              .add(RemoveFromWishlist(item.wishlistId));
-                          return;
-                        }
-                      }
-                    }
-                    context
-                        .read<WishlistBloc>()
-                        .add(AddToWishlist(product.id));
+                    context.read<WishlistBloc>().add(ToggleWishlist(product));
                   },
                 );
               },

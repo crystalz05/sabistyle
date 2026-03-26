@@ -73,32 +73,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ),
         actions: [
           BlocBuilder<WishlistBloc, WishlistState>(
-            buildWhen: (previous, current) => current is WishlistIdsLoaded || current is WishlistLoaded,
+            buildWhen: (previous, current) => current is WishlistLoaded,
             builder: (context, state) {
-              Set<String> wishlistedIds = {};
-              if (state is WishlistLoaded) {
-                wishlistedIds = state.wishlistedProductIds;
-              } else if (state is WishlistIdsLoaded) {
-                wishlistedIds = state.wishlistedProductIds;
-              }
+              final wishlistedIds = (state is WishlistLoaded)
+                  ? state.wishlistedProductIds
+                  : <String>{};
 
               final isWishlisted = wishlistedIds.contains(widget.productId);
 
               return IconButton(
                 onPressed: () {
-                  if (isWishlisted) {
-                    // For remove, we'd need the wishlistId. For MVP simplicity on product details,
-                    // we might just fetch the full list if we need to remove, or only allow add here.
-                    // But we can just use AddToWishlist and let the repo handle ignoring duplicates.
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Already in wishlist')),
-                    );
-                  } else {
-                    context.read<WishlistBloc>().add(AddToWishlist(widget.productId));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Added to wishlist ♡')),
-                    );
-                  }
+                  context.read<WishlistBloc>().add(ToggleWishlist(product!));
                 },
                 icon: Icon(
                   isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
