@@ -19,8 +19,9 @@ class MainNavigationShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
+      // The actual page content
       body: navigationShell,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -39,10 +40,10 @@ class MainNavigationShell extends StatelessWidget {
         ),
         child: SafeArea(
           child: Container(
-            height: 72,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            height: 80, // Slightly taller for the pill padding
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _NavBarItem(
                   icon: Icons.home_outlined,
@@ -111,35 +112,44 @@ class _NavBarItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? colorScheme.primary.withValues(alpha: 0.1)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOutQuint,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          // Background color appears only when selected
+          color: isSelected
+              ? colorScheme.primary.withValues(alpha: 0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
               isSelected ? activeIcon : icon,
               color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
               size: 24,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              fontSize: 10,
+            // This is the magic widget that handles the sliding text
+            AnimatedSize(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOutQuint,
+              child: isSelected
+                  ? Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Text(
+                  label,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
+                  : const SizedBox.shrink(),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

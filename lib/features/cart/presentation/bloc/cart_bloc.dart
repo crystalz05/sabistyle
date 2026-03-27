@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/cart_item.dart';
+import '../../domain/entities/promo_code.dart';
 import '../../domain/repositories/cart_repository.dart';
 
 // ── Events ────────────────────────────────────────────────────────────────────
@@ -13,6 +14,15 @@ abstract class CartEvent extends Equatable {
 }
 
 class FetchCart extends CartEvent {}
+
+class ApplyPromoCode extends CartEvent {
+  final String code;
+  const ApplyPromoCode(this.code);
+  @override
+  List<Object?> get props => [code];
+}
+
+class RemovePromoCode extends CartEvent {}
 
 class AddToCart extends CartEvent {
   final String productId;
@@ -64,16 +74,16 @@ class CartLoading extends CartState {}
 
 class CartLoaded extends CartState {
   final List<CartItem> items;
-  final String? promoCode;
-  final double discountAmount;
+  final PromoCode? promoCode;
 
   const CartLoaded({
     required this.items,
     this.promoCode,
-    this.discountAmount = 0,
   });
 
   double get subtotal => items.fold(0, (sum, item) => sum + item.subtotal);
+
+  double get discountAmount => promoCode?.calculateDiscount(subtotal) ?? 0;
 
   double get total => subtotal - discountAmount;
 
@@ -81,13 +91,12 @@ class CartLoaded extends CartState {
 
   CartLoaded copyWith({
     List<CartItem>? items,
-    String? promoCode,
-    double? discountAmount,
+    PromoCode? promoCode,
+    bool clearPromo = false,
   }) {
     return CartLoaded(
       items: items ?? this.items,
-      promoCode: promoCode ?? this.promoCode,
-      discountAmount: discountAmount ?? this.discountAmount,
+      promoCode: clearPromo ? null : (promoCode ?? this.promoCode),
     );
   }
 
@@ -115,6 +124,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<UpdateCartItemQuantity>(_onUpdateQuantity);
     on<RemoveFromCart>(_onRemoveFromCart);
     on<ClearCart>(_onClearCart);
+    on<ApplyPromoCode>(_onApplyPromoCode);
+    on<RemovePromoCode>(_onRemovePromoCode);
 
     // Pre-load cart so the badge count is correct from the start.
     add(FetchCart());
@@ -145,7 +156,6 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       emit(CartLoaded(
         items: items,
         promoCode: previousState?.promoCode,
-        discountAmount: previousState?.discountAmount ?? 0,
       ));
     } catch (e) {
       emit(CartError(e.toString()));
@@ -198,6 +208,39 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       emit(const CartLoaded(items: []));
     } catch (e) {
       emit(CartError(e.toString()));
+    }
+  }
+
+  Future<void> _onApplyPromoCode(
+    ApplyPromoCode event,
+    Emitter<CartState> emit,
+  ) async {
+    if (state is! CartLoaded) return;
+    final current = state as CartLoaded;
+
+    emit(CartLoading());
+    try {
+      final promo = await _repository.validatePromoCode(event.code);
+      if (promo != null) {
+        emit(current.copyWith(promoCode: promo));
+      } else {
+        emit(CartError('Invalid or expired promo code'));
+        // Restore cart state after error
+        emit(current);
+      }
+    } catch (e) {
+      emit(CartError(e.toString()));
+      emit(current);
+    }
+  }
+
+  Future<void> _onRemovePromoCode(
+    RemovePromoCode event,
+    Emitter<CartState> emit,
+  ) async {
+    if (state is CartLoaded) {
+      final current = state as CartLoaded;
+      emit(current.copyWith(clearPromo: true));
     }
   }
 }

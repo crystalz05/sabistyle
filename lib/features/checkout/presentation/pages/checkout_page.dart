@@ -13,12 +13,14 @@ class CheckoutPage extends StatefulWidget {
   final List<CartItem> cartItems;
   final double subtotal;
   final String? initialPromoCode;
+  final double? initialDiscountAmount;
 
   const CheckoutPage({
     super.key,
     required this.cartItems,
     required this.subtotal,
     this.initialPromoCode,
+    this.initialDiscountAmount,
   });
 
   @override
@@ -29,6 +31,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Address? _selectedAddress;
   double _discountAmount = 0.0;
   String? _appliedPromo;
+  String? _promoCodeId;
+  final _promoController = TextEditingController();
+
+  @override
+  void dispose() {
+    _promoController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -38,9 +48,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     if (widget.initialPromoCode != null &&
         widget.initialPromoCode!.isNotEmpty) {
+      _appliedPromo = widget.initialPromoCode;
+      _discountAmount = widget.initialDiscountAmount ?? 0.0;
+      // We don't have the ID from the cart yet unless we pass it, 
+      // so we might still want to re-validate once to get the ID for the order.
       context.read<CheckoutBloc>().add(
-        ApplyPromoCode(widget.initialPromoCode!, widget.subtotal),
-      );
+            ApplyPromoCode(widget.initialPromoCode!, widget.subtotal),
+          );
     }
   }
 
@@ -65,13 +79,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
         listener: (context, state) {
           if (state is PromoApplied) {
             setState(() {
-              _appliedPromo = state.code;
-              _discountAmount = state.discountAmount;
+              _appliedPromo = state.promoCode.code;
+              _discountAmount = state.promoCode.calculateDiscount(widget.subtotal);
+              _promoCodeId = state.promoCode.id;
             });
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Promo code applied! Saved ₦${state.discountAmount.toStringAsFixed(0)}',
+                  'Promo code applied! Saved ₦${_discountAmount.toStringAsFixed(0)}',
                 ),
               ),
             );
@@ -79,6 +94,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             setState(() {
               _appliedPromo = null;
               _discountAmount = 0.0;
+              _promoCodeId = null;
             });
             ScaffoldMessenger.of(
               context,
@@ -153,6 +169,71 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   ),
                 ),
               ),
+              const Divider(height: 32),
+
+              // ── Promo Code ───────────────────────────────────────────────
+              Text('Promo Code', style: textTheme.titleMedium),
+              const SizedBox(height: 12),
+              if (_appliedPromo != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: colorScheme.primary.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.local_offer_outlined,
+                          size: 18, color: colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _appliedPromo!,
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _appliedPromo = null;
+                            _discountAmount = 0.0;
+                            _promoCodeId = null;
+                            _promoController.clear();
+                          });
+                        },
+                        icon: const Icon(Icons.close, size: 18),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  ),
+                )
+              else
+                TextField(
+                  controller: _promoController,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: InputDecoration(
+                    hintText: 'Enter promo code',
+                    suffixIcon: TextButton(
+                      onPressed: () {
+                        if (_promoController.text.trim().isNotEmpty) {
+                          context.read<CheckoutBloc>().add(
+                                ApplyPromoCode(
+                                  _promoController.text.trim(),
+                                  widget.subtotal,
+                                ),
+                              );
+                        }
+                      },
+                      child: Text('Apply', style: textTheme.labelMedium),
+                    ),
+                  ),
+                ),
 
               const Divider(height: 32),
 
@@ -216,8 +297,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             'items': orderItems,
                             'totalAmount': _total,
                             'discountAmount': _discountAmount,
-                            'promoCodeId':
-                                null, // Need the actual UUID if tracking usage, skip for MVP
+                            'promoCodeId': _promoCodeId,
                           },
                         );
                       },

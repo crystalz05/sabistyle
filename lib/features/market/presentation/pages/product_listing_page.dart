@@ -6,6 +6,8 @@ import 'package:sabistyle/features/widgets/app_empty_state.dart';
 import 'package:sabistyle/features/widgets/app_error_widget.dart';
 import 'package:sabistyle/features/widgets/product_card.dart';
 import 'package:sabistyle/features/wishlist/presentation/bloc/wishlist_bloc.dart';
+import 'package:sabistyle/features/home/domain/repositories/product_repository.dart';
+import 'package:sabistyle/features/widgets/filter_sort_bottom_sheet.dart';
 
 class ProductListingPage extends StatefulWidget {
   final String categoryId;
@@ -22,19 +24,61 @@ class ProductListingPage extends StatefulWidget {
 }
 
 class _ProductListingPageState extends State<ProductListingPage> {
+  double? _minPrice;
+  double? _maxPrice;
+  SortByPrice _sortBy = SortByPrice.none;
+
   @override
   void initState() {
     super.initState();
     // Load wishlist IDs so heart icons show the correct filled/unfilled state
     context.read<WishlistBloc>().add(LoadWishlistedIds());
+    _fetchProducts();
+  }
 
+  void _fetchProducts() {
+    final bloc = context.read<ProductBloc>();
     if (widget.categoryId == 'featured') {
-      context.read<ProductBloc>().add(FetchFeaturedProducts());
+      bloc.add(FetchFeaturedProducts(
+        minPrice: _minPrice,
+        maxPrice: _maxPrice,
+        sortByPrice: _sortBy,
+      ));
     } else if (widget.categoryId == 'new-arrivals') {
-      context.read<ProductBloc>().add(FetchNewArrivals());
+      bloc.add(FetchNewArrivals(
+        minPrice: _minPrice,
+        maxPrice: _maxPrice,
+        sortByPrice: _sortBy,
+      ));
     } else {
-      context.read<ProductBloc>().add(FetchProductsByCategory(widget.categoryId));
+      bloc.add(FetchProductsByCategory(
+        widget.categoryId,
+        minPrice: _minPrice,
+        maxPrice: _maxPrice,
+        sortByPrice: _sortBy,
+      ));
     }
+  }
+
+  void _showFilterBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FilterSortBottomSheet(
+        initialMinPrice: _minPrice,
+        initialMaxPrice: _maxPrice,
+        initialSortBy: _sortBy,
+        onApply: (min, max, sort) {
+          setState(() {
+            _minPrice = min;
+            _maxPrice = max;
+            _sortBy = sort;
+          });
+          _fetchProducts();
+        },
+      ),
+    );
   }
 
   @override
@@ -44,12 +88,27 @@ class _ProductListingPageState extends State<ProductListingPage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        surfaceTintColor: Theme.of(context).colorScheme.surface,
         title: Text(
           widget.categoryName,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          IconButton(
+            onPressed: _showFilterBottomSheet,
+            icon: Icon(
+              (_minPrice != null || _maxPrice != null || _sortBy != SortByPrice.none)
+                  ? Icons.filter_alt_rounded
+                  : Icons.filter_alt_outlined,
+              color: (_minPrice != null || _maxPrice != null || _sortBy != SortByPrice.none)
+                  ? theme.colorScheme.primary
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: BlocBuilder<ProductBloc, ProductState>(
         builder: (context, state) {
@@ -57,10 +116,12 @@ class _ProductListingPageState extends State<ProductListingPage> {
             return const Center(child: CircularProgressIndicator());
           } else if (state is ProductsLoaded) {
             if (state.products.isEmpty) {
-              return const AppEmptyState(
+              return AppEmptyState(
                 icon: Icons.inventory_2_rounded,
                 title: 'No products',
-                message: 'No products found in this category.',
+                message: (_minPrice != null || _maxPrice != null)
+                    ? 'No products found within this price range.'
+                    : 'No products found in this category.',
               );
             }
             return GridView.builder(
@@ -87,17 +148,7 @@ class _ProductListingPageState extends State<ProductListingPage> {
           } else if (state is ProductError) {
             return AppErrorWidget(
               message: state.message,
-              onRetry: () {
-                if (widget.categoryId == 'featured') {
-                  context.read<ProductBloc>().add(FetchFeaturedProducts());
-                } else if (widget.categoryId == 'new-arrivals') {
-                  context.read<ProductBloc>().add(FetchNewArrivals());
-                } else {
-                  context
-                      .read<ProductBloc>()
-                      .add(FetchProductsByCategory(widget.categoryId));
-                }
-              },
+              onRetry: _fetchProducts,
             );
           }
           return const SizedBox.shrink();

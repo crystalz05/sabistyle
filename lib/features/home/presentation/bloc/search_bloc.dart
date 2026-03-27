@@ -13,9 +13,19 @@ abstract class SearchEvent extends Equatable {
 
 class SearchQueryChanged extends SearchEvent {
   final String query;
-  const SearchQueryChanged(this.query);
+  final double? minPrice;
+  final double? maxPrice;
+  final SortByPrice sortByPrice;
+
+  const SearchQueryChanged(
+    this.query, {
+    this.minPrice,
+    this.maxPrice,
+    this.sortByPrice = SortByPrice.none,
+  });
+
   @override
-  List<Object?> get props => [query];
+  List<Object?> get props => [query, minPrice, maxPrice, sortByPrice];
 }
 
 class LoadSearchHistory extends SearchEvent {}
@@ -123,7 +133,12 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     emit(SearchLoading());
     try {
-      final results = await _repository.searchProducts(event.query);
+      final results = await _repository.searchProducts(
+        event.query,
+        minPrice: event.minPrice,
+        maxPrice: event.maxPrice,
+        sortByPrice: event.sortByPrice,
+      );
       if (results.isEmpty) {
         emit(SearchEmpty());
       } else {

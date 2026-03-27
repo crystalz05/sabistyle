@@ -35,6 +35,7 @@ class ProductCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3), width: 0.5),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
@@ -98,13 +99,44 @@ class ProductCard extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '₦${product.price.toStringAsFixed(0)}',
-                          style: textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: colorScheme.primary,
-                          ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '₦${product.price.toStringAsFixed(0)}',
+                              style: textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star_rounded,
+                                  size: 14,
+                                  color: Colors.amber[700],
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  product.avgRating.toStringAsFixed(1),
+                                  style: textTheme.labelSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '(${product.reviewCount})',
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ],
                     ),

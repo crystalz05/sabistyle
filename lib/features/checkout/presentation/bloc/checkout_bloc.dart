@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../cart/domain/entities/promo_code.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/repositories/checkout_repository.dart';
 
@@ -68,11 +69,10 @@ class CheckoutInitial extends CheckoutState {}
 class CheckoutLoading extends CheckoutState {}
 
 class PromoApplied extends CheckoutState {
-  final String code;
-  final double discountAmount;
-  const PromoApplied(this.code, this.discountAmount);
+  final PromoCode promoCode;
+  const PromoApplied(this.promoCode);
   @override
-  List<Object?> get props => [code, discountAmount];
+  List<Object?> get props => [promoCode];
 }
 
 class PromoInvalid extends CheckoutState {
@@ -114,12 +114,12 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
   ) async {
     emit(CheckoutLoading());
     try {
-      final discount = await _repository.validatePromoCode(
+      final promo = await _repository.validatePromoCode(
         event.code,
         event.orderTotal,
       );
-      if (discount > 0) {
-        emit(PromoApplied(event.code, discount));
+      if (promo != null) {
+        emit(PromoApplied(promo));
       } else {
         emit(const PromoInvalid('Invalid or expired promo code'));
       }

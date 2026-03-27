@@ -15,9 +15,19 @@ class ProductRepositoryImpl implements ProductRepository {
         _historyLocalDataSource = historyLocalDataSource;
 
   @override
-  Future<List<Product>> getProductsByCategory(String categoryId) async {
+  Future<List<Product>> getProductsByCategory(
+    String categoryId, {
+    double? minPrice,
+    double? maxPrice,
+    SortByPrice sortByPrice = SortByPrice.none,
+  }) async {
     try {
-      return await _remoteDataSource.getProductsByCategory(categoryId);
+      return await _remoteDataSource.getProductsByCategory(
+        categoryId,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+        sortByPrice: sortByPrice,
+      );
     } catch (e) {
       throw ErrorMapper.fromError(e);
     }
@@ -33,27 +43,53 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<List<Product>> searchProducts(String query) async {
+  Future<List<Product>> searchProducts(
+    String query, {
+    double? minPrice,
+    double? maxPrice,
+    SortByPrice sortByPrice = SortByPrice.none,
+  }) async {
     try {
-      return await _remoteDataSource.searchProducts(query);
+      return await _remoteDataSource.searchProducts(
+        query,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+        sortByPrice: sortByPrice,
+      );
     } catch (e) {
       throw ErrorMapper.fromError(e);
     }
   }
 
   @override
-  Future<List<Product>> getFeaturedProducts() async {
+  Future<List<Product>> getFeaturedProducts({
+    double? minPrice,
+    double? maxPrice,
+    SortByPrice sortByPrice = SortByPrice.none,
+  }) async {
     try {
-      return await _remoteDataSource.getFeaturedProducts();
+      return await _remoteDataSource.getFeaturedProducts(
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+        sortByPrice: sortByPrice,
+      );
     } catch (e) {
       throw ErrorMapper.fromError(e);
     }
   }
 
   @override
-  Future<List<Product>> getNewArrivals() async {
+  Future<List<Product>> getNewArrivals({
+    double? minPrice,
+    double? maxPrice,
+    SortByPrice sortByPrice = SortByPrice.none,
+  }) async {
     try {
-      return await _remoteDataSource.getNewArrivals();
+      return await _remoteDataSource.getNewArrivals(
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+        sortByPrice: sortByPrice,
+      );
     } catch (e) {
       throw ErrorMapper.fromError(e);
     }
