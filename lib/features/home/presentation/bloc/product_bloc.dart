@@ -12,9 +12,19 @@ abstract class ProductEvent extends Equatable {
 
 class FetchProductsByCategory extends ProductEvent {
   final String categoryId;
-  const FetchProductsByCategory(this.categoryId);
+  final double? minPrice;
+  final double? maxPrice;
+  final SortByPrice sortByPrice;
+
+  const FetchProductsByCategory(
+    this.categoryId, {
+    this.minPrice,
+    this.maxPrice,
+    this.sortByPrice = SortByPrice.none,
+  });
+
   @override
-  List<Object?> get props => [categoryId];
+  List<Object?> get props => [categoryId, minPrice, maxPrice, sortByPrice];
 }
 
 class FetchProductDetail extends ProductEvent {
@@ -24,9 +34,35 @@ class FetchProductDetail extends ProductEvent {
   List<Object?> get props => [productId];
 }
 
-class FetchFeaturedProducts extends ProductEvent {}
+class FetchFeaturedProducts extends ProductEvent {
+  final double? minPrice;
+  final double? maxPrice;
+  final SortByPrice sortByPrice;
 
-class FetchNewArrivals extends ProductEvent {}
+  const FetchFeaturedProducts({
+    this.minPrice,
+    this.maxPrice,
+    this.sortByPrice = SortByPrice.none,
+  });
+
+  @override
+  List<Object?> get props => [minPrice, maxPrice, sortByPrice];
+}
+
+class FetchNewArrivals extends ProductEvent {
+  final double? minPrice;
+  final double? maxPrice;
+  final SortByPrice sortByPrice;
+
+  const FetchNewArrivals({
+    this.minPrice,
+    this.maxPrice,
+    this.sortByPrice = SortByPrice.none,
+  });
+
+  @override
+  List<Object?> get props => [minPrice, maxPrice, sortByPrice];
+}
 
 // States
 abstract class ProductState extends Equatable {
@@ -75,7 +111,12 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   ) async {
     emit(ProductLoading());
     try {
-      final products = await _repository.getProductsByCategory(event.categoryId);
+      final products = await _repository.getProductsByCategory(
+        event.categoryId,
+        minPrice: event.minPrice,
+        maxPrice: event.maxPrice,
+        sortByPrice: event.sortByPrice,
+      );
       emit(ProductsLoaded(products));
     } catch (e) {
       emit(ProductError(e.toString()));
@@ -88,7 +129,11 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   ) async {
     emit(ProductLoading());
     try {
-      final products = await _repository.getFeaturedProducts();
+      final products = await _repository.getFeaturedProducts(
+        minPrice: event.minPrice,
+        maxPrice: event.maxPrice,
+        sortByPrice: event.sortByPrice,
+      );
       emit(ProductsLoaded(products));
     } catch (e) {
       emit(ProductError(e.toString()));
@@ -101,7 +146,11 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   ) async {
     emit(ProductLoading());
     try {
-      final products = await _repository.getNewArrivals();
+      final products = await _repository.getNewArrivals(
+        minPrice: event.minPrice,
+        maxPrice: event.maxPrice,
+        sortByPrice: event.sortByPrice,
+      );
       emit(ProductsLoaded(products));
     } catch (e) {
       emit(ProductError(e.toString()));

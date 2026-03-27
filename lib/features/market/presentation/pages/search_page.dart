@@ -6,6 +6,9 @@ import 'package:sabistyle/features/widgets/product_card.dart';
 import 'package:sabistyle/features/widgets/app_empty_state.dart';
 import 'package:sabistyle/features/widgets/app_error_widget.dart';
 
+import 'package:sabistyle/features/home/domain/repositories/product_repository.dart';
+import 'package:sabistyle/features/widgets/filter_sort_bottom_sheet.dart';
+
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
@@ -16,6 +19,10 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  
+  double? _minPrice;
+  double? _maxPrice;
+  SortByPrice _sortBy = SortByPrice.none;
 
   @override
   void initState() {
@@ -35,8 +42,36 @@ class _SearchPageState extends State<SearchPage> {
 
   void _onSearch(String query) {
     if (query.trim().isNotEmpty) {
-      context.read<SearchBloc>().add(SearchQueryChanged(query));
+      context.read<SearchBloc>().add(SearchQueryChanged(
+            query,
+            minPrice: _minPrice,
+            maxPrice: _maxPrice,
+            sortByPrice: _sortBy,
+          ));
     }
+  }
+
+  void _showFilterBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FilterSortBottomSheet(
+        initialMinPrice: _minPrice,
+        initialMaxPrice: _maxPrice,
+        initialSortBy: _sortBy,
+        onApply: (min, max, sort) {
+          setState(() {
+            _minPrice = min;
+            _maxPrice = max;
+            _sortBy = sort;
+          });
+          if (_searchController.text.isNotEmpty) {
+            _onSearch(_searchController.text);
+          }
+        },
+      ),
+    );
   }
 
   @override
@@ -69,6 +104,17 @@ class _SearchPageState extends State<SearchPage> {
         ),
         actions: [
           IconButton(
+            onPressed: _showFilterBottomSheet,
+            icon: Icon(
+              (_minPrice != null || _maxPrice != null || _sortBy != SortByPrice.none)
+                  ? Icons.filter_alt_rounded
+                  : Icons.filter_alt_outlined,
+              color: (_minPrice != null || _maxPrice != null || _sortBy != SortByPrice.none)
+                  ? colorScheme.primary
+                  : null,
+            ),
+          ),
+          IconButton(
             onPressed: () {
               _searchController.clear();
               context.read<SearchBloc>().add(ClearSearch());
@@ -100,10 +146,12 @@ class _SearchPageState extends State<SearchPage> {
               },
             );
           } else if (state is SearchEmpty) {
-            return const AppEmptyState(
+            return AppEmptyState(
               icon: Icons.search_off_rounded,
               title: 'No results',
-              message: 'No products found matching your search.',
+              message: (_minPrice != null || _maxPrice != null)
+                  ? 'No products found within this price range.'
+                  : 'No products found matching your search.',
             );
           } else if (state is SearchInitial) {
             if (state.history.isEmpty) {

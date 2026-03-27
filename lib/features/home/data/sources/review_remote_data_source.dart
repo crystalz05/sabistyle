@@ -21,14 +21,14 @@ class ReviewRemoteDataSourceImpl implements ReviewRemoteDataSource {
           .eq('product_id', productId)
           .order('created_at', ascending: false);
       
-      if (response == null || (response as List).isEmpty) {
+      if ((response as List).isEmpty) {
         // Double check with a totally raw query if first one is empty
         final rawResponse = await _client
             .from('reviews')
             .select()
             .eq('product_id', productId);
         
-        if (rawResponse != null && (rawResponse as List).isNotEmpty) {
+        if ((rawResponse as List).isNotEmpty) {
            return (rawResponse as List).map((json) => ReviewModel.fromJson(Map<String, dynamic>.from(json))).toList();
         }
       }
