@@ -60,6 +60,7 @@ class _HomePageState extends State<HomePage> {
   AppBar _buildAppBar(BuildContext context) {
     final theme = Theme.of(context);
     return AppBar(
+      surfaceTintColor: Theme.of(context).colorScheme.surface,
       title: Text(
         'SabiStyle',
         style: theme.textTheme.titleLarge,

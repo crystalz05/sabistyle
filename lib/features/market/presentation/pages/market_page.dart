@@ -38,6 +38,7 @@ class _MarketPageState extends State<MarketPage> {
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
+          surfaceTintColor: Theme.of(context).colorScheme.surface,
           title: Text(
             'Market',
             style: theme.textTheme.titleLarge?.copyWith(

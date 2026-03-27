@@ -88,6 +88,7 @@ class _ProductListingPageState extends State<ProductListingPage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        surfaceTintColor: Theme.of(context).colorScheme.surface,
         title: Text(
           widget.categoryName,
           style: theme.textTheme.titleLarge?.copyWith(

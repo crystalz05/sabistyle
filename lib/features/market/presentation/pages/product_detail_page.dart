@@ -331,7 +331,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                         color:
                                             _getColorFromName(colorName),
                                         border: Border.all(
-                                            color: Colors.black12),
+                                            color: colorScheme.outlineVariant),
                                       ),
                                     ),
                                     const SizedBox(width: 6),
@@ -449,7 +449,7 @@ class _RatingBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+          Icon(Icons.star_rounded, color: colorScheme.primary, size: 16),
           const SizedBox(width: 5),
           Text(
             rating.toStringAsFixed(1),
@@ -899,7 +899,7 @@ class _ReviewCard extends StatelessWidget {
                   Icons.star_rounded,
                   size: 13,
                   color: i < review.rating
-                      ? Colors.amber
+                      ? colorScheme.primary
                       : colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
                 );
               }),
