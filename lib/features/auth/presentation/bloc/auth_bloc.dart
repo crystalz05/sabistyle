@@ -141,6 +141,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     LoginRequested event,
     Emitter<AuthState> emit,
   ) async {
+    final prevUser = state is Authenticated ? (state as Authenticated).user : null;
     emit(AuthLoading());
     try {
       final user = await _loginUseCase(
@@ -149,8 +150,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(Authenticated(user));
     } on AppException catch (e) {
       emit(AuthError(e.message));
+      if (prevUser != null) emit(Authenticated(prevUser));
     } catch (_) {
       emit(const AuthError('Sign in failed. Please try again.'));
+      if (prevUser != null) emit(Authenticated(prevUser));
     }
   }
 
@@ -184,14 +187,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     LogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
+    final prevUser = state is Authenticated ? (state as Authenticated).user : null;
     emit(AuthLoading());
     try {
       await _repository.signOut();
       emit(Unauthenticated());
     } on AppException catch (e) {
       emit(AuthError(e.message));
+      if (prevUser != null) emit(Authenticated(prevUser));
     } catch (_) {
       emit(const AuthError('Sign out failed. Please try again.'));
+      if (prevUser != null) emit(Authenticated(prevUser));
     }
   }
 
@@ -214,14 +220,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     UpdatePasswordRequested event,
     Emitter<AuthState> emit,
   ) async {
+    final prevUser = state is Authenticated ? (state as Authenticated).user : null;
     emit(AuthLoading());
     try {
       await _repository.updatePassword(newPassword: event.newPassword);
       emit(PasswordUpdated());
+      if (prevUser != null) emit(Authenticated(prevUser));
     } on AppException catch (e) {
       emit(AuthError(e.message));
+      if (prevUser != null) emit(Authenticated(prevUser));
     } catch (_) {
       emit(const AuthError('Could not update password. Please try again.'));
+      if (prevUser != null) emit(Authenticated(prevUser));
     }
   }
 

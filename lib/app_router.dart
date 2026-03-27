@@ -25,7 +25,10 @@ import 'features/home/presentation/bloc/search_bloc.dart';
 import 'features/orders/presentation/bloc/order_bloc.dart';
 import 'features/orders/presentation/pages/orders_page.dart';
 import 'features/orders/presentation/pages/order_detail_page.dart';
+import 'features/profile/presentation/bloc/profile_bloc.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
+import 'features/profile/presentation/pages/edit_profile_page.dart';
+import 'features/profile/presentation/pages/change_password_page.dart';
 import 'features/wishlist/presentation/pages/wishlist_page.dart';
 import 'features/cart/presentation/pages/cart_page.dart';
 import 'features/cart/presentation/bloc/cart_bloc.dart';
@@ -65,7 +68,10 @@ abstract final class AppRoutes {
   static const orders = '/home/orders';
   static const orderDetail = '/home/orders/:orderId';
   static const profile = '/home/profile';
-  static const addresses = '/home/profile/addresses';
+  static const editProfile = '/home/profile/edit';
+  static const profileAddresses = '/home/profile/addresses';
+  static const changePassword = '/home/profile/change-password';
+  static const addresses = '/home/profile/checkout-addresses';
 }
 
 /// Creates a [GoRouter] instance wired to [AuthBloc].
@@ -108,8 +114,11 @@ GoRouter createRouter(AuthBloc authBloc) {
         return null;
       }
 
-      // If loading or awaiting verification, do not forcibly redirect.
-      if (authState is AuthLoading || authState is AwaitingVerification) {
+      // If loading, awaiting verification, just updated password, or hit a transient error, do not forcibly redirect.
+      if (authState is AuthLoading ||
+          authState is AwaitingVerification ||
+          authState is PasswordUpdated ||
+          authState is AuthError) {
         return null;
       }
 
@@ -292,9 +301,38 @@ GoRouter createRouter(AuthBloc authBloc) {
            ),
            StatefulShellBranch(
              routes: [
-               GoRoute(
-                 path: AppRoutes.profile,
-                 builder: (context, state) => const ProfilePage(),
+               ShellRoute(
+                 builder: (context, state, child) {
+                   return BlocProvider(
+                     create: (_) => GetIt.I<ProfileBloc>()..add(FetchProfile()),
+                     child: child,
+                   );
+                 },
+                 routes: [
+                   GoRoute(
+                     path: AppRoutes.profile,
+                     builder: (context, state) => const ProfilePage(),
+                     routes: [
+                       GoRoute(
+                         path: 'edit',
+                         builder: (context, state) => const EditProfilePage(),
+                       ),
+                       GoRoute(
+                         path: 'addresses',
+                         builder: (context, state) {
+                           return BlocProvider.value(
+                             value: GetIt.I<AddressBloc>(),
+                             child: const AddressPage(isSelecting: false),
+                           );
+                         },
+                       ),
+                       GoRoute(
+                         path: 'change-password',
+                         builder: (context, state) => const ChangePasswordPage(),
+                       ),
+                     ],
+                   ),
+                 ],
                ),
              ],
            ),
