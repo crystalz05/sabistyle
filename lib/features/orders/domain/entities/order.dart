@@ -44,5 +44,5 @@ class Order {
   });
 
   bool get isPending => status == 'pending';
-  bool get canBeCancelled => status == 'pending';
+  bool get canBeCancelled => status != 'shipped' && status != 'delivered' && status != 'cancelled';
 }

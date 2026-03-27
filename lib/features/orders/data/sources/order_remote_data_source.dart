@@ -46,6 +46,8 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
         .update({'status': 'cancelled'})
         .eq('id', orderId)
         .eq('user_id', _userId)
-        .eq('status', 'pending');
+        .neq('status', 'shipped')
+        .neq('status', 'delivered')
+        .neq('status', 'cancelled');
   }
 }

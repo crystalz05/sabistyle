@@ -62,7 +62,7 @@ class CheckoutRemoteDataSourceImpl implements CheckoutRemoteDataSource {
         .from('orders')
         .insert({
           'user_id': _userId,
-          'status': 'processing',
+          'status': 'pending',
           'total_amount': totalAmount,
           'discount_amount': discountAmount,
           'address_id': addressId,

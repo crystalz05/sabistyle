@@ -75,13 +75,48 @@ class _OrdersPageState extends State<OrdersPage> {
                 ),
               );
             }
+
+            final activeOrders = state.orders.where((o) => o.status != 'delivered' && o.status != 'cancelled').toList();
+            final deliveredOrders = state.orders.where((o) => o.status == 'delivered').toList();
+            final cancelledOrders = state.orders.where((o) => o.status == 'cancelled').toList();
+
             return RefreshIndicator(
               onRefresh: () async => context.read<OrderBloc>().add(FetchOrders()),
-              child: ListView.separated(
+              child: ListView(
                 padding: const EdgeInsets.all(16),
-                itemCount: state.orders.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) => _OrderCard(order: state.orders[index]),
+                children: [
+                  if (activeOrders.isNotEmpty) ...[
+                    Text('Active Orders', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    ...activeOrders.map((o) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _OrderCard(order: o),
+                    )),
+                    const SizedBox(height: 12),
+                  ],
+                  
+                  if (deliveredOrders.isNotEmpty) ...[
+                    _CollapsibleSection(
+                      title: 'Delivered Orders',
+                      count: deliveredOrders.length,
+                      icon: Icons.check_circle_outline_rounded,
+                      accentColor: const Color(0xFF10B981),
+                      orders: deliveredOrders,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  if (cancelledOrders.isNotEmpty) ...[
+                    _CollapsibleSection(
+                      title: 'Cancelled Orders',
+                      count: cancelledOrders.length,
+                      icon: Icons.cancel_outlined,
+                      accentColor: colorScheme.error,
+                      orders: cancelledOrders,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ],
               ),
             );
           }
@@ -195,28 +230,104 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (color, bgColor, label) = switch (status) {
-      'pending' => (const Color(0xFFB45309), const Color(0xFFFEF3C7), 'Pending'),
-      'processing' => (const Color(0xFF1D4ED8), const Color(0xFFDBEAFE), 'Processing'),
-      'shipped' => (const Color(0xFF7C3AED), const Color(0xFFEDE9FE), 'Shipped'),
-      'delivered' => (const Color(0xFF15803D), const Color(0xFFDCFCE7), 'Delivered'),
-      'cancelled' => (const Color(0xFFDC2626), const Color(0xFFFEE2E2), 'Cancelled'),
-      _ => (Colors.grey.shade700, Colors.grey.shade100, status),
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final (Color color, String label) = switch (status) {
+      'pending' => (colorScheme.primary, 'Pending'),
+      'processing' => (const Color(0xFF3B82F6), 'Processing'),
+      'shipped' => (const Color(0xFF8B5CF6), 'Shipped'),
+      'delivered' => (const Color(0xFF10B981), 'Delivered'),
+      'cancelled' => (colorScheme.error, 'Cancelled'),
+      _ => (colorScheme.onSurfaceVariant, status.toUpperCase()),
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: color,
           fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.3,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+class _CollapsibleSection extends StatelessWidget {
+  final String title;
+  final int count;
+  final IconData icon;
+  final Color accentColor;
+  final List<Order> orders;
+
+  const _CollapsibleSection({
+    required this.title,
+    required this.count,
+    required this.icon,
+    required this.accentColor,
+    required this.orders,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Theme(
+      data: theme.copyWith(dividerColor: Colors.transparent),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: ExpansionTile(
+          shape: const RoundedRectangleBorder(side: BorderSide.none),
+          collapsedShape: const RoundedRectangleBorder(side: BorderSide.none),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: accentColor, size: 20),
+          ),
+          title: Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '$count',
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          children: orders.map((o) => Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: _OrderCard(order: o),
+          )).toList(),
         ),
       ),
     );

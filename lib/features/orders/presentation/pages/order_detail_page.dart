@@ -181,20 +181,43 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   }
 
   void _confirmCancel(BuildContext context, String orderId) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancel Order?'),
-        content: const Text('Are you sure you want to cancel this order? This action cannot be undone.'),
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: colorScheme.error),
+            const SizedBox(width: 12),
+            Text('Cancel Order?', style: TextStyle(color: colorScheme.error),),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to cancel this order?',
+        ),
         actions: [
-          TextButton(onPressed: () => ctx.pop(), child: const Text('No, keep it')),
           TextButton(
+            onPressed: () => ctx.pop(),
+            child: Text(
+              'No, Keep It',
+              style: TextStyle(color: colorScheme.onSurfaceVariant),
+            ),
+          ),
+          ElevatedButton(
             onPressed: () {
               ctx.pop();
               context.read<OrderBloc>().add(CancelOrder(orderId));
             },
-            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
-            child: const Text('Yes, cancel'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.error,
+              foregroundColor: colorScheme.onError,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Yes, Cancel'),
           ),
         ],
       ),
@@ -231,18 +254,21 @@ class _StatusTimeline extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEE2E2),
+          color: colorScheme.error.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.error.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.cancel_rounded, color: Color(0xFFDC2626), size: 24),
+            Icon(Icons.cancel_rounded, color: colorScheme.error, size: 24),
             const SizedBox(width: 12),
-            Text(
-              'This order has been cancelled.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFFDC2626),
-                fontWeight: FontWeight.w600,
+            Expanded(
+              child: Text(
+                'This order has been cancelled.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.error,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
