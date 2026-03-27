@@ -8,27 +8,16 @@ import 'features/auth/auth_injection.dart';
 import 'features/cart/cart_injection.dart';
 import 'features/checkout/checkout_injection.dart';
 import 'features/home/home_injection.dart';
+import 'features/orders/orders_injection.dart';
 import 'features/wishlist/wishlist_injection.dart';
 
 final sl = GetIt.instance;
 
 /// Entry point for all dependency injection.
-///
-/// Pattern: register shared/external dependencies first, then call each
-/// feature module so they can resolve their own dependencies from [sl].
-///
-///  init()
-///  ├── External (SupabaseClient, etc.)
-///  ├── registerAuthDependencies(sl)
-///  └── … future features (registerProductDependencies, etc.)
 Future<void> init(SharedPreferences sharedPreferences) async {
-  // ── External ─────────────────────────────────────────────────────────────
-  // SupabaseClient must be registered before any feature that uses Supabase.
-  // Supabase.initialize() is called in main.dart before this runs.
   sl.registerLazySingleton(() => Supabase.instance.client);
   sl.registerLazySingleton(() => sharedPreferences);
 
-  // ── Features ─────────────────────────────────────────────────────────────
   sl.registerLazySingleton(() => NetworkInfo.instance);
   sl.registerFactory(() => NetworkBloc(sl()));
 
@@ -39,4 +28,5 @@ Future<void> init(SharedPreferences sharedPreferences) async {
   registerWishlistDependencies(sl);
   registerCartDependencies(sl);
   registerCheckoutDependencies(sl);
+  registerOrderDependencies(sl);
 }

@@ -22,7 +22,9 @@ import 'features/market/presentation/pages/product_detail_page.dart';
 import 'features/market/presentation/pages/search_page.dart';
 import 'features/home/presentation/bloc/product_bloc.dart';
 import 'features/home/presentation/bloc/search_bloc.dart';
+import 'features/orders/presentation/bloc/order_bloc.dart';
 import 'features/orders/presentation/pages/orders_page.dart';
+import 'features/orders/presentation/pages/order_detail_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'features/wishlist/presentation/pages/wishlist_page.dart';
 import 'features/cart/presentation/pages/cart_page.dart';
@@ -61,6 +63,7 @@ abstract final class AppRoutes {
   static const payment = '/home/cart/checkout/payment';
   static const orderConfirmation = '/home/cart/checkout/confirmation';
   static const orders = '/home/orders';
+  static const orderDetail = '/home/orders/:orderId';
   static const profile = '/home/profile';
   static const addresses = '/home/profile/addresses';
 }
@@ -268,7 +271,22 @@ GoRouter createRouter(AuthBloc authBloc) {
              routes: [
                GoRoute(
                  path: AppRoutes.orders,
-                 builder: (context, state) => const OrdersPage(),
+                 builder: (context, state) => BlocProvider(
+                   create: (_) => GetIt.I<OrderBloc>(),
+                   child: const OrdersPage(),
+                 ),
+                 routes: [
+                   GoRoute(
+                     path: ':orderId',
+                     builder: (context, state) {
+                       final orderId = state.pathParameters['orderId']!;
+                       return BlocProvider(
+                         create: (_) => GetIt.I<OrderBloc>(),
+                         child: OrderDetailPage(orderId: orderId),
+                       );
+                     },
+                   ),
+                 ],
                ),
              ],
            ),

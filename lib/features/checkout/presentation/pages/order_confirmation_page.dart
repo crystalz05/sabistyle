@@ -75,7 +75,7 @@ class OrderConfirmationPage extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     // Navigate to the real orders tab on profile
-                    context.go('/home/profile/orders-page');
+                    context.go('/home/orders');
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 18),
