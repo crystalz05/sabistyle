@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../bloc/profile_bloc.dart';
@@ -79,22 +80,50 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
 
     if (source != null && context.mounted) {
-      _pickImage(context, source);
+      await _pickImage(context, source); // ← must be awaited
     }
   }
 
   Future<void> _pickImage(BuildContext context, ImageSource source) async {
+    final theme = Theme.of(context);
     final picker = ImagePicker();
-    final picked = await picker.pickImage(
+    final pickedFile = await picker.pickImage(
       source: source,
       imageQuality: 85,
-      maxWidth: 512,
     );
-    if (picked == null) return;
+    if (pickedFile == null) return;
 
-    setState(() => _localImagePath = picked.path);
+    debugPrint('[pickImage] Starting crop for: ${pickedFile.path}');
+
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: pickedFile.path,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Photo',
+          toolbarColor: theme.colorScheme.primary,
+          toolbarWidgetColor: theme.colorScheme.onPrimary,
+          lockAspectRatio: true,
+          hideBottomControls: true,
+          aspectRatioPresets: [CropAspectRatioPreset.square], // ← add this
+        ),
+        IOSUiSettings(
+          title: 'Crop Photo',
+          aspectRatioLockEnabled: true,
+          resetAspectRatioEnabled: false,
+          aspectRatioPresets: [CropAspectRatioPreset.square], // ← add this
+        ),
+      ],
+    );
+
+    debugPrint('[pickImage] Crop result: ${croppedFile?.path}');
+
+
+    if (croppedFile == null) return;
+
+    setState(() => _localImagePath = croppedFile.path);
     if (context.mounted) {
-      context.read<ProfileBloc>().add(UploadAvatar(picked.path));
+      context.read<ProfileBloc>().add(UploadAvatar(croppedFile.path));
     }
   }
 

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -71,6 +73,8 @@ class _ProfileView extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
+          debugPrint('user.profileurl: ${user.avatarUrl}');
+
           return CustomScrollView(
             slivers: [
               // ── Header ─────────────────────────────────────────────────────
@@ -114,14 +118,13 @@ class _ProfileView extends StatelessWidget {
                                     user.avatarUrl!.isNotEmpty
                                 ? ClipOval(
                                     child: CachedNetworkImage(
+                                      key: ValueKey(user.avatarUrl), // ← forces rebuild when URL changes
                                       imageUrl: user.avatarUrl!,
                                       fit: BoxFit.cover,
                                       width: 96,
                                       height: 96,
-                                      placeholder: (_, __) =>
-                                          _InitialsBadge(name: user.fullName),
-                                      errorWidget: (_, __, ___) =>
-                                          _InitialsBadge(name: user.fullName),
+                                      placeholder: (_, __) => _InitialsBadge(name: user.fullName),
+                                      errorWidget: (_, __, ___) => _InitialsBadge(name: user.fullName),
                                     ),
                                   )
                                 : _InitialsBadge(name: user.fullName),

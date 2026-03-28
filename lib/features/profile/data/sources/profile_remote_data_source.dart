@@ -1,6 +1,10 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:dio/dio.dart';
+
+import '../../../../core/config/app_config.dart';
 import '../../../../core/error/app_exception.dart';
 import '../models/profile_model.dart';
 
@@ -50,6 +54,74 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       throw AppException('Failed to update profile: $e');
     }
   }
+  
+  Future<void> _testBucket() async {
+    try {
+      final url = '${AppConfig.supabaseUrl}/storage/v1/bucket/avatars';
+      debugPrint('[uploadAvatar] Testing bucket URL: $url');
+      
+      final dio = Dio();
+      final response = await dio.get(
+        url,
+        options: Options(headers: {
+          'Authorization': 'Bearer ${_client.auth.currentSession?.accessToken ?? AppConfig.supabaseAnonKey}',
+          'apikey': AppConfig.supabaseAnonKey,
+        }),
+      );
+      debugPrint('[uploadAvatar] Bucket test response: ${response.data}');
+    } catch (e) {
+      debugPrint('[uploadAvatar] Bucket test ERROR: $e');
+      if (e is DioException) {
+        debugPrint('[uploadAvatar] DioException Response: ${e.response?.data}');
+      }
+    }
+  }
+  
+  // @override
+  // Future<ProfileModel> uploadAvatar(String filePath) async {
+  //   try {
+  //     final file = File(filePath);
+  //     final ext = filePath.split('.').last.toLowerCase();
+  //     final fileName = '$_userId/avatar.$ext';
+  //
+  //     debugPrint('[uploadAvatar] Start. UserId: $_userId');
+  //     debugPrint('[uploadAvatar] fileName: $fileName');
+  //     debugPrint('[uploadAvatar] file path: $filePath');
+  //     debugPrint('[uploadAvatar] file exists: ${file.existsSync()}');
+  //
+  //     debugPrint('[uploadAvatar] Attempting to upload to Supabase storage...');
+  //
+  //     await _testBucket();
+  //
+  //     await _client.storage
+  //         .from('avatars')
+  //         .upload(fileName, file, fileOptions: const FileOptions(upsert: true));
+  //     debugPrint('[uploadAvatar] Upload completed successfully.');
+  //
+  //
+  //     debugPrint('[uploadAvatar] Fetching public URL...');
+  //     final publicUrl =
+  //         _client.storage.from('avatars').getPublicUrl(fileName);
+  //     debugPrint('[uploadAvatar] Public URL: $publicUrl');
+  //
+  //     debugPrint('[uploadAvatar] Updating users table with new avatar URL...');
+  //     await _client
+  //         .from('users')
+  //         .update({'avatar_url': publicUrl}).eq('id', _userId);
+  //     debugPrint('[uploadAvatar] Database update successful.');
+  //
+  //     return fetchProfile();
+  //   } on StorageException catch (e) {
+  //     debugPrint('[uploadAvatar] StorageException caught!');
+  //     debugPrint('  Message: ${e.message}');
+  //     debugPrint('  Status code: ${e.statusCode}');
+  //     debugPrint('  Error detail: ${e.error}');
+  //     throw AppException('Storage error uploading avatar: ${e.message} (Code: ${e.statusCode})');
+  //   } catch (e) {
+  //     debugPrint('[uploadAvatar] General Exception: $e');
+  //     throw AppException('Failed to upload avatar: $e');
+  //   }
+  // }
 
   @override
   Future<ProfileModel> uploadAvatar(String filePath) async {
@@ -57,20 +129,40 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       final file = File(filePath);
       final ext = filePath.split('.').last.toLowerCase();
       final fileName = '$_userId/avatar.$ext';
+      final bytes = await file.readAsBytes();
 
-      await _client.storage
-          .from('avatars')
-          .upload(fileName, file, fileOptions: const FileOptions(upsert: true));
+      final accessToken = _client.auth.currentSession?.accessToken;
 
-      final publicUrl =
-          _client.storage.from('avatars').getPublicUrl(fileName);
+      final uploadUrl =
+          '${AppConfig.supabaseUrl}/storage/v1/object/avatars/$fileName';
+
+      final dio = Dio();
+      await dio.put(
+        uploadUrl,
+        data: bytes,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+            'apikey': AppConfig.supabaseAnonKey,
+            'Content-Type': 'image/$ext',
+            'x-upsert': 'true',
+          },
+        ),
+      );
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final publicUrl = '${AppConfig.supabaseUrl}/storage/v1/object/public/avatars/$fileName?t=$timestamp';
 
       await _client
           .from('users')
           .update({'avatar_url': publicUrl}).eq('id', _userId);
 
       return fetchProfile();
+    } on DioException catch (e) {
+      debugPrint('[uploadAvatar] DioException: ${e.response?.data}');
+      throw AppException('Upload failed: ${e.response?.data}');
     } catch (e) {
+      debugPrint('[uploadAvatar] Exception: $e');
       throw AppException('Failed to upload avatar: $e');
     }
   }
