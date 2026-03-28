@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../../../../features/widgets/app_error_widget.dart';
+import '../../../../features/widgets/app_empty_state.dart';
 import '../bloc/notification_bloc.dart';
 import '../bloc/notification_event.dart';
 import '../bloc/notification_state.dart';
@@ -52,21 +53,10 @@ class NotificationPage extends StatelessWidget {
             final notifications = state.notifications;
 
             if (notifications.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.notifications_off_outlined,
-                        size: 64, color: theme.colorScheme.outlineVariant),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No notifications yet',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
+              return const AppEmptyState(
+                icon: Icons.notifications_off_outlined,
+                title: 'No notifications',
+                message: 'You have no notifications yet.',
               );
             }
 

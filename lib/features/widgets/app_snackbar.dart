@@ -55,11 +55,10 @@ class AppSnackBar {
             ],
           ),
           backgroundColor: backgroundColor,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+          behavior: SnackBarBehavior.fixed,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
           ),
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       );
   }

@@ -7,6 +7,7 @@ import '../../../../injection_container.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../../features/widgets/app_snackbar.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -92,12 +93,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: theme.colorScheme.error,
-            ),
-          );
+          AppSnackBar.showError(context, message: state.message);
         }
       },
       child: Scaffold(

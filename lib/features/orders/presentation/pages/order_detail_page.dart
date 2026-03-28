@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../domain/entities/order.dart';
 import '../bloc/order_bloc.dart';
 import '../pages/orders_page.dart' show StatusBadge;
+import '../../../../features/widgets/app_snackbar.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final String orderId;
@@ -39,13 +40,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       body: BlocConsumer<OrderBloc, OrderState>(
         listener: (context, state) {
           if (state is OrderCancelled) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Order cancelled successfully.')),
-            );
+            AppSnackBar.showSuccess(context, message: 'Order cancelled successfully.');
           } else if (state is OrderError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: colorScheme.error),
-            );
+            AppSnackBar.showError(context, message: state.message);
           }
         },
         builder: (context, state) {

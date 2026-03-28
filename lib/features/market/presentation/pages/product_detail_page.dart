@@ -7,6 +7,8 @@ import 'package:sabistyle/features/home/presentation/bloc/review_bloc.dart';
 import 'package:sabistyle/features/home/domain/entities/review.dart';
 import 'package:sabistyle/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:sabistyle/features/wishlist/presentation/bloc/wishlist_bloc.dart';
+import 'package:sabistyle/features/widgets/app_snackbar.dart';
+import 'package:sabistyle/features/widgets/app_shimmer.dart';
 
 import '../../../home/domain/entities/product.dart';
 
@@ -136,13 +138,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       body: Builder(
         builder: (context) {
           if (productState is ProductLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return _buildSkeleton(context, size, colorScheme);
           } else if (productState is ProductError) {
             return Center(
               child: Text(productState.message,
                   style: TextStyle(color: colorScheme.error)));
           } else if (product == null) {
-            return const Center(child: CircularProgressIndicator());
+            return _buildSkeleton(context, size, colorScheme);
           }
 
           return SingleChildScrollView(
@@ -398,6 +400,82 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
     );
       },
+    );
+  }
+
+  Widget _buildSkeleton(BuildContext context, Size size, ColorScheme colorScheme) {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Column(
+        children: [
+          // Image header skeleton
+          AppShimmer(width: double.infinity, height: size.height * 0.38, borderRadius: 0),
+          
+          // Content area skeleton
+          Container(
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            padding: const EdgeInsets.fromLTRB(22, 28, 22, 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Name + Rating
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppShimmer.textLine(context, width: 200, height: 28),
+                          const SizedBox(height: 8),
+                          AppShimmer.textLine(context, width: 100, height: 16),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const AppShimmer(width: 60, height: 32, borderRadius: 16),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // Price + Quantity
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AppShimmer.textLine(context, width: 120, height: 36),
+                    const AppShimmer(width: 100, height: 42, borderRadius: 21),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                // Options (Size/color label)
+                AppShimmer.textLine(context, width: 80, height: 20),
+                const SizedBox(height: 12),
+                Row(
+                  children: const [
+                    AppShimmer(width: 50, height: 36, borderRadius: 8),
+                    SizedBox(width: 12),
+                    AppShimmer(width: 50, height: 36, borderRadius: 8),
+                    SizedBox(width: 12),
+                    AppShimmer(width: 50, height: 36, borderRadius: 8),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                // Description
+                AppShimmer.textLine(context, width: 100, height: 20),
+                const SizedBox(height: 12),
+                AppShimmer.textLine(context, width: double.infinity, height: 16),
+                const SizedBox(height: 8),
+                AppShimmer.textLine(context, width: double.infinity, height: 16),
+                const SizedBox(height: 8),
+                AppShimmer.textLine(context, width: 200, height: 16),
+                const SizedBox(height: 48),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -661,26 +739,14 @@ class _AddToCartButton extends StatelessWidget {
                             color: selectedColor ?? '',
                           ),
                         );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Added $quantity to cart!'),
-                        behavior: SnackBarBehavior.floating,
-                        action: SnackBarAction(
-                          label: 'VIEW CART',
-                          onPressed: () => context.push('/home/cart'),
-                        ),
-                      ),
-                    );
+                    // ScaffoldMessenger was replaced with AppSnackBar below.
+                    // Note: AppSnackBar doesn't natively support actions right now, but that's fine for our standardization.
+                    AppSnackBar.showSuccess(context, message: 'Added $quantity to cart!');
                   }
                 : isValid
                     ? null
                     : () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Please select required options (Size/Color)'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
+                        AppSnackBar.showError(context, message: 'Please select required options (Size/Color)');
                       },
             style: ElevatedButton.styleFrom(
               backgroundColor: isValid

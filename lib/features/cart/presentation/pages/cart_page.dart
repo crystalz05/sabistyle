@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../bloc/cart_bloc.dart';
+import '../../../../features/widgets/app_snackbar.dart';
+import '../../../../features/widgets/app_empty_state.dart';
+import '../../../../features/widgets/app_shimmer.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -58,20 +61,23 @@ class _CartPageState extends State<CartPage> {
         listenWhen: (previous, current) => current is CartError,
         listener: (context, state) {
           if (state is CartError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: colorScheme.error,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            AppSnackBar.showError(context, message: state.message);
           }
         },
         child: BlocBuilder<CartBloc, CartState>(
           buildWhen: (previous, current) => current is! CartError,
           builder: (context, state) {
             if (state is CartLoading || state is CartInitial) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: 4,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (_, __) => const AppShimmer(
+                width: double.infinity,
+                height: 120,
+                borderRadius: 16,
+              ),
+            );
           }
 
           if (state is CartLoaded) {
@@ -257,47 +263,13 @@ class _CartPageState extends State<CartPage> {
     ColorScheme colorScheme,
     TextTheme textTheme,
   ) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.shopping_bag_outlined,
-                size: 52,
-                color: colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Your cart is empty',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add items to your cart\nand they\'ll appear here.',
-              textAlign: TextAlign.center,
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 28),
-            ElevatedButton(
-              onPressed: () => context.go('/home/market'),
-              child: const Text('Shop Now'),
-            ),
-          ],
-        ),
+    return AppEmptyState(
+      icon: Icons.shopping_bag_outlined,
+      title: 'Your cart is empty',
+      message: 'Add items to your cart\nand they\'ll appear here.',
+      actionButton: ElevatedButton(
+        onPressed: () => context.go('/home/market'),
+        child: const Text('Shop Now'),
       ),
     );
   }
