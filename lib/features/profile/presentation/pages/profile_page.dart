@@ -1,13 +1,9 @@
-import 'dart:developer';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app_router.dart';
-import '../../../auth/presentation/bloc/auth_bloc.dart';
-import '../../../auth/presentation/bloc/auth_event.dart';
 import '../bloc/profile_bloc.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -203,11 +199,9 @@ class _ProfileView extends StatelessWidget {
                       _ProfileMenuCard(
                         children: [
                           _MenuItem(
-                            icon: Icons.logout_rounded,
-                            label: 'Logout',
-                            iconColor: colorScheme.error,
-                            labelColor: colorScheme.error,
-                            onTap: () => _confirmLogout(context),
+                            icon: Icons.settings_rounded,
+                            label: 'Settings',
+                            onTap: () => context.push('/home/profile/settings'),
                           ),
                         ],
                       ),
@@ -219,31 +213,6 @@ class _ProfileView extends StatelessWidget {
             ],
           );
         },
-      ),
-    );
-  }
-
-  void _confirmLogout(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to log out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.read<AuthBloc>().add(LogoutRequested());
-            },
-            child: Text('Logout',
-                style: TextStyle(color: colorScheme.error)),
-          ),
-        ],
       ),
     );
   }
@@ -299,15 +268,11 @@ class _MenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final Color? iconColor;
-  final Color? labelColor;
 
   const _MenuItem({
     required this.icon,
     required this.label,
     required this.onTap,
-    this.iconColor,
-    this.labelColor,
   });
 
   @override
@@ -327,7 +292,7 @@ class _MenuItem extends StatelessWidget {
               Icon(
                 icon,
                 size: 22,
-                color: iconColor ?? colorScheme.primary,
+                color: colorScheme.primary,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -335,7 +300,6 @@ class _MenuItem extends StatelessWidget {
                   label,
                   style: textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: labelColor,
                   ),
                 ),
               ),

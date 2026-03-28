@@ -13,6 +13,8 @@ import 'injection_container.dart';
 import 'core/network/network_bloc.dart';
 import 'features/cart/presentation/bloc/cart_bloc.dart';
 import 'features/wishlist/presentation/bloc/wishlist_bloc.dart';
+import 'features/notifications/presentation/bloc/notification_bloc.dart';
+import 'features/profile/presentation/bloc/profile_bloc.dart';
 
 class MyApp extends StatefulWidget {
   final Uri? initialUri;
@@ -72,6 +74,12 @@ class _MyAppState extends State<MyApp> {
         ),
         BlocProvider<CartBloc>(
           create: (context) => sl<CartBloc>()..add(FetchCart()),
+        ),
+        BlocProvider<NotificationBloc>(
+          create: (context) => sl<NotificationBloc>(),
+        ),
+        BlocProvider<ProfileBloc>(
+          create: (context) => sl<ProfileBloc>()..add(FetchProfile()),
         ),
       ],
       child: MaterialApp.router(

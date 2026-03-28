@@ -10,6 +10,9 @@ import '../../domain/entities/product.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
+import '../../../../features/notifications/presentation/bloc/notification_bloc.dart';
+import '../../../../features/notifications/presentation/bloc/notification_event.dart';
+import '../../../../features/notifications/presentation/bloc/notification_state.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,6 +29,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _homeBloc = sl<HomeBloc>()..add(FetchHomeData());
+    context.read<NotificationBloc>().add(SubscribeToNotifications());
   }
 
   @override
@@ -69,6 +73,19 @@ class _HomePageState extends State<HomePage> {
         IconButton(
           icon: Icon(Icons.search_rounded, color: theme.colorScheme.onSurface),
           onPressed: () => context.push('/home/search'),
+        ),
+        BlocBuilder<NotificationBloc, NotificationState>(
+          builder: (context, state) {
+            final unreadCount = state is NotificationsLoaded ? state.unreadCount : 0;
+            return IconButton(
+              icon: Badge(
+                isLabelVisible: unreadCount > 0,
+                label: Text(unreadCount.toString()),
+                child: Icon(Icons.notifications_outlined, color: theme.colorScheme.onSurface),
+              ),
+              onPressed: () => context.push('/home/notifications'),
+            );
+          },
         ),
         const CartBadgeIcon(),
         const SizedBox(width: 8),

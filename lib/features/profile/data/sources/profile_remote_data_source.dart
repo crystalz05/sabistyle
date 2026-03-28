@@ -54,29 +54,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       throw AppException('Failed to update profile: $e');
     }
   }
-  
-  Future<void> _testBucket() async {
-    try {
-      final url = '${AppConfig.supabaseUrl}/storage/v1/bucket/avatars';
-      debugPrint('[uploadAvatar] Testing bucket URL: $url');
-      
-      final dio = Dio();
-      final response = await dio.get(
-        url,
-        options: Options(headers: {
-          'Authorization': 'Bearer ${_client.auth.currentSession?.accessToken ?? AppConfig.supabaseAnonKey}',
-          'apikey': AppConfig.supabaseAnonKey,
-        }),
-      );
-      debugPrint('[uploadAvatar] Bucket test response: ${response.data}');
-    } catch (e) {
-      debugPrint('[uploadAvatar] Bucket test ERROR: $e');
-      if (e is DioException) {
-        debugPrint('[uploadAvatar] DioException Response: ${e.response?.data}');
-      }
-    }
-  }
-  
+
   // @override
   // Future<ProfileModel> uploadAvatar(String filePath) async {
   //   try {

@@ -38,4 +38,7 @@ abstract class AuthRepository {
 
   /// Updates the user's password using an active session (e.g. after reset link).
   Future<void> updatePassword({required String newPassword});
+
+  /// Deletes the user account permanently.
+  Future<void> deleteAccount();
 }

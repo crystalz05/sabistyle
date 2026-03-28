@@ -25,10 +25,12 @@ import 'features/home/presentation/bloc/search_bloc.dart';
 import 'features/orders/presentation/bloc/order_bloc.dart';
 import 'features/orders/presentation/pages/orders_page.dart';
 import 'features/orders/presentation/pages/order_detail_page.dart';
-import 'features/profile/presentation/bloc/profile_bloc.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'features/profile/presentation/pages/edit_profile_page.dart';
 import 'features/profile/presentation/pages/change_password_page.dart';
+import 'features/settings/presentation/pages/settings_page.dart';
+import 'features/settings/presentation/pages/webview_page.dart';
+import 'features/notifications/presentation/pages/notification_page.dart';
 import 'features/wishlist/presentation/pages/wishlist_page.dart';
 import 'features/cart/presentation/pages/cart_page.dart';
 import 'features/cart/presentation/bloc/cart_bloc.dart';
@@ -74,6 +76,8 @@ abstract final class AppRoutes {
   static const addresses = '/home/profile/checkout-addresses';
 }
 
+final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
+
 /// Creates a [GoRouter] instance wired to [AuthBloc].
 ///
 /// The router's `redirect` is the single source of truth for
@@ -82,6 +86,7 @@ abstract final class AppRoutes {
 /// [AuthBloc] emits a new state.
 GoRouter createRouter(AuthBloc authBloc) {
   return GoRouter(
+    navigatorKey: _rootNavigatorKey,
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: true,
 
@@ -229,6 +234,25 @@ GoRouter createRouter(AuthBloc authBloc) {
                        child: const SearchPage(),
                      ),
                    ),
+                   GoRoute(
+                     path: 'notifications',
+                     parentNavigatorKey: _rootNavigatorKey,
+                     builder: (context, state) => const NotificationPage(),
+                   ),
+                   GoRoute(
+                     path: 'settings',
+                     builder: (context, state) => const SettingsPage(),
+                     routes: [
+                       GoRoute(
+                         path: 'webview',
+                         builder: (context, state) {
+                           final title = state.uri.queryParameters['title'] ?? 'Terms';
+                           final url = state.uri.queryParameters['url'] ?? '';
+                           return WebviewPage(title: title, url: url);
+                         },
+                       ),
+                     ],
+                   ),
                  ],
                ),
              ],
@@ -301,34 +325,43 @@ GoRouter createRouter(AuthBloc authBloc) {
            ),
            StatefulShellBranch(
              routes: [
-               ShellRoute(
-                 builder: (context, state, child) {
-                   return BlocProvider(
-                     create: (_) => GetIt.I<ProfileBloc>()..add(FetchProfile()),
-                     child: child,
-                   );
-                 },
+               GoRoute(
+                 path: AppRoutes.profile,
+                 builder: (context, state) => const ProfilePage(),
                  routes: [
                    GoRoute(
-                     path: AppRoutes.profile,
-                     builder: (context, state) => const ProfilePage(),
+                     path: 'edit',
+                     parentNavigatorKey: _rootNavigatorKey,
+                     builder: (context, state) => const EditProfilePage(),
+                   ),
+                   GoRoute(
+                     path: 'addresses',
+                     parentNavigatorKey: _rootNavigatorKey,
+                     builder: (context, state) {
+                       return BlocProvider.value(
+                         value: GetIt.I<AddressBloc>(),
+                         child: const AddressPage(isSelecting: false),
+                       );
+                     },
+                   ),
+                   GoRoute(
+                     path: 'change-password',
+                     parentNavigatorKey: _rootNavigatorKey,
+                     builder: (context, state) => const ChangePasswordPage(),
+                   ),
+                   GoRoute(
+                     path: 'settings',
+                     parentNavigatorKey: _rootNavigatorKey,
+                     builder: (context, state) => const SettingsPage(),
                      routes: [
                        GoRoute(
-                         path: 'edit',
-                         builder: (context, state) => const EditProfilePage(),
-                       ),
-                       GoRoute(
-                         path: 'addresses',
+                         path: 'webview',
+                         parentNavigatorKey: _rootNavigatorKey,
                          builder: (context, state) {
-                           return BlocProvider.value(
-                             value: GetIt.I<AddressBloc>(),
-                             child: const AddressPage(isSelecting: false),
-                           );
+                           final title = state.uri.queryParameters['title'] ?? 'Legal Info';
+                           final url = state.uri.queryParameters['url'] ?? '';
+                           return WebviewPage(title: title, url: url);
                          },
-                       ),
-                       GoRoute(
-                         path: 'change-password',
-                         builder: (context, state) => const ChangePasswordPage(),
                        ),
                      ],
                    ),

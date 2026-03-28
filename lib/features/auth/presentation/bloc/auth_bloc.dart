@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import '../../domain/entities/app_user.dart';
@@ -40,6 +41,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginRequested>(_onLoginRequested);
     on<SignUpRequested>(_onSignUpRequested);
     on<LogoutRequested>(_onLogoutRequested);
+    on<DeleteAccountRequested>(_onDeleteAccountRequested);
     on<ResetPasswordRequested>(_onResetPasswordRequested);
     on<UpdatePasswordRequested>(_onUpdatePasswordRequested);
     on<DeepLinkReceived>(_onDeepLinkReceived);
@@ -191,12 +193,32 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       await _repository.signOut();
+      await DefaultCacheManager().emptyCache(); // Clear cached profile network images
       emit(Unauthenticated());
     } on AppException catch (e) {
       emit(AuthError(e.message));
       if (prevUser != null) emit(Authenticated(prevUser));
     } catch (_) {
       emit(const AuthError('Sign out failed. Please try again.'));
+      if (prevUser != null) emit(Authenticated(prevUser));
+    }
+  }
+
+  Future<void> _onDeleteAccountRequested(
+    DeleteAccountRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    final prevUser = state is Authenticated ? (state as Authenticated).user : null;
+    emit(AuthLoading());
+    try {
+      await _repository.deleteAccount();
+      await DefaultCacheManager().emptyCache(); // Clear cached profile network images
+      emit(Unauthenticated());
+    } on AppException catch (e) {
+      emit(AuthError(e.message));
+      if (prevUser != null) emit(Authenticated(prevUser));
+    } catch (_) {
+      emit(const AuthError('Account deletion failed. Please try again.'));
       if (prevUser != null) emit(Authenticated(prevUser));
     }
   }
