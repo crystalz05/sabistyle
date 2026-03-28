@@ -26,6 +26,11 @@ import 'features/orders/presentation/bloc/order_bloc.dart';
 import 'features/orders/presentation/pages/orders_page.dart';
 import 'features/orders/presentation/pages/order_detail_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
+import 'features/profile/presentation/pages/edit_profile_page.dart';
+import 'features/profile/presentation/pages/change_password_page.dart';
+import 'features/settings/presentation/pages/settings_page.dart';
+import 'features/settings/presentation/pages/webview_page.dart';
+import 'features/notifications/presentation/pages/notification_page.dart';
 import 'features/wishlist/presentation/pages/wishlist_page.dart';
 import 'features/cart/presentation/pages/cart_page.dart';
 import 'features/cart/presentation/bloc/cart_bloc.dart';
@@ -65,8 +70,13 @@ abstract final class AppRoutes {
   static const orders = '/home/orders';
   static const orderDetail = '/home/orders/:orderId';
   static const profile = '/home/profile';
-  static const addresses = '/home/profile/addresses';
+  static const editProfile = '/home/profile/edit';
+  static const profileAddresses = '/home/profile/addresses';
+  static const changePassword = '/home/profile/change-password';
+  static const addresses = '/home/profile/checkout-addresses';
 }
+
+final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
 /// Creates a [GoRouter] instance wired to [AuthBloc].
 ///
@@ -76,6 +86,7 @@ abstract final class AppRoutes {
 /// [AuthBloc] emits a new state.
 GoRouter createRouter(AuthBloc authBloc) {
   return GoRouter(
+    navigatorKey: _rootNavigatorKey,
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: true,
 
@@ -108,8 +119,11 @@ GoRouter createRouter(AuthBloc authBloc) {
         return null;
       }
 
-      // If loading or awaiting verification, do not forcibly redirect.
-      if (authState is AuthLoading || authState is AwaitingVerification) {
+      // If loading, awaiting verification, just updated password, or hit a transient error, do not forcibly redirect.
+      if (authState is AuthLoading ||
+          authState is AwaitingVerification ||
+          authState is PasswordUpdated ||
+          authState is AuthError) {
         return null;
       }
 
@@ -220,6 +234,25 @@ GoRouter createRouter(AuthBloc authBloc) {
                        child: const SearchPage(),
                      ),
                    ),
+                   GoRoute(
+                     path: 'notifications',
+                     parentNavigatorKey: _rootNavigatorKey,
+                     builder: (context, state) => const NotificationPage(),
+                   ),
+                   GoRoute(
+                     path: 'settings',
+                     builder: (context, state) => const SettingsPage(),
+                     routes: [
+                       GoRoute(
+                         path: 'webview',
+                         builder: (context, state) {
+                           final title = state.uri.queryParameters['title'] ?? 'Terms';
+                           final url = state.uri.queryParameters['url'] ?? '';
+                           return WebviewPage(title: title, url: url);
+                         },
+                       ),
+                     ],
+                   ),
                  ],
                ),
              ],
@@ -295,6 +328,44 @@ GoRouter createRouter(AuthBloc authBloc) {
                GoRoute(
                  path: AppRoutes.profile,
                  builder: (context, state) => const ProfilePage(),
+                 routes: [
+                   GoRoute(
+                     path: 'edit',
+                     parentNavigatorKey: _rootNavigatorKey,
+                     builder: (context, state) => const EditProfilePage(),
+                   ),
+                   GoRoute(
+                     path: 'addresses',
+                     parentNavigatorKey: _rootNavigatorKey,
+                     builder: (context, state) {
+                       return BlocProvider.value(
+                         value: GetIt.I<AddressBloc>(),
+                         child: const AddressPage(isSelecting: false),
+                       );
+                     },
+                   ),
+                   GoRoute(
+                     path: 'change-password',
+                     parentNavigatorKey: _rootNavigatorKey,
+                     builder: (context, state) => const ChangePasswordPage(),
+                   ),
+                   GoRoute(
+                     path: 'settings',
+                     parentNavigatorKey: _rootNavigatorKey,
+                     builder: (context, state) => const SettingsPage(),
+                     routes: [
+                       GoRoute(
+                         path: 'webview',
+                         parentNavigatorKey: _rootNavigatorKey,
+                         builder: (context, state) {
+                           final title = state.uri.queryParameters['title'] ?? 'Legal Info';
+                           final url = state.uri.queryParameters['url'] ?? '';
+                           return WebviewPage(title: title, url: url);
+                         },
+                       ),
+                     ],
+                   ),
+                 ],
                ),
              ],
            ),

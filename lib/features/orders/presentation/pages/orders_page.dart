@@ -5,6 +5,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../domain/entities/order.dart';
 import '../bloc/order_bloc.dart';
+import '../../../../features/widgets/app_empty_state.dart';
+import '../../../../features/widgets/app_shimmer.dart';
 
 class OrdersPage extends StatefulWidget {
   const OrdersPage({super.key});
@@ -32,7 +34,16 @@ class _OrdersPageState extends State<OrdersPage> {
       body: BlocBuilder<OrderBloc, OrderState>(
         builder: (context, state) {
           if (state is OrderLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: 4,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (_, __) => const AppShimmer(
+                width: double.infinity,
+                height: 160,
+                borderRadius: 16,
+              ),
+            );
           }
           if (state is OrderError) {
             return Center(
@@ -53,25 +64,13 @@ class _OrdersPageState extends State<OrdersPage> {
           }
           if (state is OrdersLoaded) {
             if (state.orders.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.shopping_bag_outlined, size: 80, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
-                    const SizedBox(height: 24),
-                    Text('No orders yet', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Your completed orders will appear here.',
-                      style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32),
-                    ElevatedButton(
-                      onPressed: () => context.go('/home'),
-                      child: const Text('Start Shopping'),
-                    ),
-                  ],
+              return AppEmptyState(
+                icon: Icons.shopping_bag_outlined,
+                title: 'No orders yet',
+                message: 'Your completed orders will appear here.',
+                actionButton: ElevatedButton(
+                  onPressed: () => context.go('/home'),
+                  child: const Text('Start Shopping'),
                 ),
               );
             }

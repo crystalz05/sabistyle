@@ -76,3 +76,6 @@ class UpdatePasswordRequested extends AuthEvent {
   @override
   List<Object?> get props => [newPassword];
 }
+
+/// Dispatched when the user taps "Delete Account".
+class DeleteAccountRequested extends AuthEvent {}

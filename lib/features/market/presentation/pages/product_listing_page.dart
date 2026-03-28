@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sabistyle/features/home/presentation/bloc/product_bloc.dart';
 import 'package:sabistyle/features/widgets/app_empty_state.dart';
 import 'package:sabistyle/features/widgets/app_error_widget.dart';
+import 'package:sabistyle/features/widgets/app_shimmer.dart';
 import 'package:sabistyle/features/widgets/product_card.dart';
 import 'package:sabistyle/features/wishlist/presentation/bloc/wishlist_bloc.dart';
 import 'package:sabistyle/features/home/domain/repositories/product_repository.dart';
@@ -113,7 +114,19 @@ class _ProductListingPageState extends State<ProductListingPage> {
       body: BlocBuilder<ProductBloc, ProductState>(
         builder: (context, state) {
           if (state is ProductLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.72,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: 6,
+              itemBuilder: (context, index) {
+                return const AppShimmer(width: double.infinity, height: double.infinity, borderRadius: 16);
+              },
+            );
           } else if (state is ProductsLoaded) {
             if (state.products.isEmpty) {
               return AppEmptyState(

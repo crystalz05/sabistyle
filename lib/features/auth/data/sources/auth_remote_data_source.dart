@@ -83,8 +83,16 @@ class AuthRemoteDatasource {
 
       final user = response.user;
       if (user == null || user.emailConfirmedAt == null) {
-        // Supabase returns user == null (or sets emailConfirmedAt == null)
-        // when email confirmation is required. Treat as pending verification.
+        // Supabase stores the user ID even when email confirmation is pending.
+        // Send a welcome in-app notification so it appears once they verify.
+        if (user != null) {
+          _insertNotification(
+            userId: user.id,
+            title: '🎉 Welcome to SabiStyle!',
+            body: 'Check your email to verify your account.',
+            type: 'auth',
+          );
+        }
         throw const AppException(
           'Account created! Please check your email to verify your account.',
           code: 'email_confirmation_required',
@@ -142,6 +150,19 @@ class AuthRemoteDatasource {
   }
 
   // ------------------------------------------------------------------ //
+  // Delete account
+  // ------------------------------------------------------------------ //
+
+  Future<void> deleteAccount() async {
+    try {
+      await _client.rpc('delete_user');
+      await _client.auth.signOut();
+    } catch (e) {
+      throw ErrorMapper.fromError(e);
+    }
+  }
+
+  // ------------------------------------------------------------------ //
   // Reset password
   // ------------------------------------------------------------------ //
 
@@ -151,6 +172,21 @@ class AuthRemoteDatasource {
         email,
         redirectTo: 'sabistyle://reset-password',
       );
+      // Best-effort: look up the user's ID from public.users so we can notify them.
+      // If the user doesn't exist we simply skip the notification.
+      final data = await _client
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .maybeSingle();
+      if (data != null) {
+        _insertNotification(
+          userId: data['id'] as String,
+          title: '🔐 Password Reset',
+          body: 'A reset link has been sent to your email.',
+          type: 'auth',
+        );
+      }
     } catch (e) {
       throw ErrorMapper.fromError(e);
     }
@@ -161,7 +197,16 @@ class AuthRemoteDatasource {
   /// their session is active.
   Future<void> updatePassword({required String newPassword}) async {
     try {
-      await _client.auth.updateUser(UserAttributes(password: newPassword));
+      final response = await _client.auth.updateUser(UserAttributes(password: newPassword));
+      final user = response.user;
+      if (user != null) {
+        _insertNotification(
+          userId: user.id,
+          title: '✅ Password Updated',
+          body: 'Your account password has been successfully changed.',
+          type: 'auth',
+        );
+      }
     } catch (e) {
       throw ErrorMapper.fromError(e);
     }
@@ -209,5 +254,26 @@ class AuthRemoteDatasource {
       // is not invalidated on a flaky connection.
       return AppUser(id: userId, email: email, fullName: '');
     }
+  }
+
+  /// Fire-and-forget helper that inserts a notification row.
+  /// Errors are intentionally swallowed so they never disrupt auth flows.
+  void _insertNotification({
+    required String userId,
+    required String title,
+    required String body,
+    required String type,
+  }) {
+    _client.from('notifications').insert({
+      'user_id': userId,
+      'title': title,
+      'body': body,
+      'type': type,
+      'is_read': false,
+    }).then((_) {
+      debugPrint('[AuthDatasource] Notification inserted: $title');
+    }).catchError((e) {
+      debugPrint('[AuthDatasource] _insertNotification failed: $e');
+    });
   }
 }

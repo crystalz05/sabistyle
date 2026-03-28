@@ -7,6 +7,9 @@ import '../../../cart/presentation/bloc/cart_bloc.dart';
 import '../../../widgets/app_error_widget.dart';
 import '../../../widgets/product_card.dart';
 import '../bloc/wishlist_bloc.dart';
+import '../../../../features/widgets/app_snackbar.dart';
+import '../../../../features/widgets/app_empty_state.dart';
+import '../../../../features/widgets/app_shimmer.dart';
 
 class WishlistPage extends StatefulWidget {
   const WishlistPage({super.key});
@@ -40,11 +43,11 @@ class _WishlistPageState extends State<WishlistPage> {
       body: BlocBuilder<WishlistBloc, WishlistState>(
         builder: (context, state) {
           if (state is WishlistInitial) {
-            return const Center(child: CircularProgressIndicator());
+            return _buildSkeleton();
           }
 
           if (state is WishlistLoading && (state is! WishlistLoaded || (state as WishlistLoaded).items.isEmpty)) {
-            return const Center(child: CircularProgressIndicator());
+            return _buildSkeleton();
           }
 
           if (state is WishlistError) {
@@ -96,15 +99,9 @@ class _WishlistPageState extends State<WishlistPage> {
                             ),
                           );
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Added ${product.name} to cart!'),
-                          behavior: SnackBarBehavior.floating,
-                          action: SnackBarAction(
-                            label: 'VIEW CART',
-                            onPressed: () => context.push('/home/cart'),
-                          ),
-                        ),
+                      AppSnackBar.showSuccess(
+                        context,
+                        message: 'Item added to cart',
                       );
                     },
                   );
@@ -124,47 +121,31 @@ class _WishlistPageState extends State<WishlistPage> {
     ColorScheme colorScheme,
     TextTheme textTheme,
   ) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.favorite_outline_rounded,
-                size: 52,
-                color: colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Your wishlist is empty',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Items you love will appear here.\nStart exploring!',
-              textAlign: TextAlign.center,
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 28),
-            ElevatedButton(
-              onPressed: () => context.go('/home/market'),
-              child: const Text('Browse Products'),
-            ),
-          ],
-        ),
+    return AppEmptyState(
+      icon: Icons.favorite_outline_rounded,
+      title: 'Your wishlist is empty',
+      message: 'Items you love will appear here.\nStart exploring!',
+      actionButton: ElevatedButton(
+        onPressed: () => context.go('/home/market'),
+        child: const Text('Browse Products'),
+      ),
+    );
+  }
+
+  Widget _buildSkeleton() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(20),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.62,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
+      itemCount: 6,
+      itemBuilder: (_, __) => const AppShimmer(
+        width: double.infinity,
+        height: double.infinity,
+        borderRadius: 16,
       ),
     );
   }

@@ -3,13 +3,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../injection_container.dart';
-import '../../../../widgets/cart_badge_icon.dart';
-import '../../../widgets/app_error_widget.dart';
-import '../../../widgets/product_card.dart';
-import '../../domain/entities/product.dart';
+import 'package:sabistyle/widgets/cart_badge_icon.dart';
+import 'package:sabistyle/features/widgets/app_error_widget.dart';
+import 'package:sabistyle/features/widgets/app_shimmer.dart';
+import 'package:sabistyle/features/widgets/product_card.dart';
+import 'package:sabistyle/features/home/domain/entities/product.dart';
+import '../../../cart/presentation/bloc/cart_bloc.dart';
+import '../../../notifications/presentation/bloc/notification_bloc.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
+import '../../../../features/notifications/presentation/bloc/notification_event.dart';
+import '../../../../features/notifications/presentation/bloc/notification_state.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,6 +31,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _homeBloc = sl<HomeBloc>()..add(FetchHomeData());
+    context.read<NotificationBloc>().add(SubscribeToNotifications());
   }
 
   @override
@@ -44,7 +50,7 @@ class _HomePageState extends State<HomePage> {
         body: BlocBuilder<HomeBloc, HomeState>(
           builder: (context, state) {
             if (state is HomeLoading || state is HomeInitial) {
-              return const Center(child: CircularProgressIndicator());
+              return _buildLoadingState(context);
             } else if (state is HomeError) {
               return _buildErrorState(context, state.message);
             } else if (state is HomeLoaded) {
@@ -70,6 +76,19 @@ class _HomePageState extends State<HomePage> {
           icon: Icon(Icons.search_rounded, color: theme.colorScheme.onSurface),
           onPressed: () => context.push('/home/search'),
         ),
+        BlocBuilder<NotificationBloc, NotificationState>(
+          builder: (context, state) {
+            final unreadCount = state is NotificationsLoaded ? state.unreadCount : 0;
+            return IconButton(
+              icon: Badge(
+                isLabelVisible: unreadCount > 0,
+                label: Text(unreadCount.toString()),
+                child: Icon(Icons.notifications_outlined, color: theme.colorScheme.onSurface),
+              ),
+              onPressed: () => context.push('/home/notifications'),
+            );
+          },
+        ),
         const CartBadgeIcon(),
         const SizedBox(width: 8),
       ],
@@ -80,6 +99,78 @@ class _HomePageState extends State<HomePage> {
     return AppErrorWidget(
       message: message,
       onRetry: () => context.read<HomeBloc>().add(FetchHomeData()),
+    );
+  }
+
+  Widget _buildLoadingState(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 16),
+          // Banner Skeleton
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: AppShimmer(width: double.infinity, height: 180, borderRadius: 16),
+          ),
+          const SizedBox(height: 24),
+          // Categories Skeleton
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: AppShimmer.textLine(context, width: 120, height: 20),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 90,
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              scrollDirection: Axis.horizontal,
+              itemCount: 4,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 20),
+                  child: Column(
+                    children: [
+                      const AppShimmer(width: 60, height: 60, borderRadius: 30),
+                      const SizedBox(height: 8),
+                      AppShimmer.textLine(context, width: 50, height: 12),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 32),
+          // Featured Products Skeleton
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                AppShimmer.textLine(context, width: 150, height: 20),
+                AppShimmer.textLine(context, width: 60, height: 16),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          GridView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.72,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            itemCount: 4,
+            itemBuilder: (context, index) {
+              return const AppShimmer(width: double.infinity, height: double.infinity, borderRadius: 16);
+            },
+          ),
+        ],
+      ),
     );
   }
 

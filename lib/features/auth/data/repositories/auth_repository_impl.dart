@@ -50,4 +50,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> updatePassword({required String newPassword}) =>
       _datasource.updatePassword(newPassword: newPassword);
+
+  @override
+  Future<void> deleteAccount() => _datasource.deleteAccount();
 }

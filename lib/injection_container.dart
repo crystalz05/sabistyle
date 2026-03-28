@@ -10,6 +10,8 @@ import 'features/checkout/checkout_injection.dart';
 import 'features/home/home_injection.dart';
 import 'features/orders/orders_injection.dart';
 import 'features/wishlist/wishlist_injection.dart';
+import 'features/profile/profile_injection.dart';
+import 'features/notifications/notification_injection.dart';
 
 final sl = GetIt.instance;
 
@@ -29,4 +31,6 @@ Future<void> init(SharedPreferences sharedPreferences) async {
   registerCartDependencies(sl);
   registerCheckoutDependencies(sl);
   registerOrderDependencies(sl);
+  registerProfileDependencies(sl);
+  registerNotificationDependencies(sl);
 }

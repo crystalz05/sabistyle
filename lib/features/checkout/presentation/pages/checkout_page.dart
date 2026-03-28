@@ -8,6 +8,7 @@ import '../../domain/entities/address.dart';
 import '../../domain/entities/order_item.dart';
 import '../bloc/address_bloc.dart';
 import '../bloc/checkout_bloc.dart';
+import '../../../../features/widgets/app_snackbar.dart';
 
 class CheckoutPage extends StatefulWidget {
   final List<CartItem> cartItems;
@@ -83,12 +84,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
               _discountAmount = state.promoCode.calculateDiscount(widget.subtotal);
               _promoCodeId = state.promoCode.id;
             });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Promo code applied! Saved ₦${_discountAmount.toStringAsFixed(0)}',
-                ),
-              ),
+            AppSnackBar.showSuccess(
+              context,
+              message: 'Promo code applied! Saved ₦${_discountAmount.toStringAsFixed(0)}',
             );
           } else if (state is PromoInvalid) {
             setState(() {
@@ -96,9 +94,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               _discountAmount = 0.0;
               _promoCodeId = null;
             });
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
+            AppSnackBar.showError(context, message: state.message);
           }
         },
         child: SingleChildScrollView(

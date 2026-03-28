@@ -10,6 +10,7 @@ import '../../../../core/config/app_config.dart';
 import '../../../cart/presentation/bloc/cart_bloc.dart';
 import '../../domain/entities/order_item.dart';
 import '../bloc/checkout_bloc.dart';
+import '../../../../features/widgets/app_snackbar.dart';
 
 class PaymentPage extends StatefulWidget {
   final String addressId;
@@ -152,12 +153,7 @@ class _PaymentPageState extends State<PaymentPage> {
 
   void _onPaymentCancelled() {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Payment was cancelled'),
-        backgroundColor: Theme.of(context).colorScheme.error,
-      ),
-    );
+    AppSnackBar.showError(context, message: 'Payment was cancelled');
     context.pop();
   }
 
@@ -172,12 +168,7 @@ class _PaymentPageState extends State<PaymentPage> {
           context.read<CartBloc>().add(ClearCart());
           context.go('/home/cart/checkout/confirmation', extra: state.orderId);
         } else if (state is CheckoutError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Order failed: ${state.message}'),
-              backgroundColor: colorScheme.error,
-            ),
-          );
+          AppSnackBar.showError(context, message: 'Order failed: ${state.message}');
         }
       },
       child: Scaffold(
