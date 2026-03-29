@@ -116,7 +116,7 @@ class ProductCard extends StatelessWidget {
                                 Icon(
                                   Icons.star_rounded,
                                   size: 14,
-                                  color: Colors.amber[700],
+                                  color: colorScheme.primary,
                                 ),
                                 const SizedBox(width: 2),
                                 Text(
@@ -124,6 +124,7 @@ class ProductCard extends StatelessWidget {
                                   style: textTheme.labelSmall?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 11,
+                                    color: colorScheme.primary,
                                   ),
                                 ),
                                 const SizedBox(width: 4),

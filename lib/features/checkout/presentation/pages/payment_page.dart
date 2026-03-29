@@ -104,7 +104,8 @@ class _PaymentPageState extends State<PaymentPage> {
                 return NavigationDecision.prevent;
               }
 
-              if (url.contains('paystack.com/close') ||
+              if (url.contains('paystack.co/close') ||
+                  url.contains('paystack.com/close') ||
                   url.contains('cancelled') ||
                   (url.contains('trxref') == false && url.contains('/close'))) {
                 _onPaymentCancelled();
