@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/theme/theme_cubit.dart';
 import '../../../../injection_container.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
@@ -123,6 +124,7 @@ class _SettingsPageState extends State<SettingsPage> {
               activeThumbColor: theme.colorScheme.primary,
               onChanged: _toggleNotifications,
             ),
+            _ThemeModeTile(),
             const Divider(),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -195,6 +197,86 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A settings tile that allows the user to choose between Light / System / Dark theme.
+class _ThemeModeTile extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return BlocBuilder<ThemeCubit, ThemeMode>(
+      builder: (context, currentMode) {
+        return ListTile(
+          leading: const Icon(Icons.brightness_6_outlined),
+          title: const Text('App Theme'),
+          subtitle: Text(_label(currentMode)),
+          trailing: _ThemeModeToggle(
+            currentMode: currentMode,
+            onChanged: (mode) => context.read<ThemeCubit>().setThemeMode(mode),
+            activeColor: theme.colorScheme.primary,
+          ),
+        );
+      },
+    );
+  }
+
+  String _label(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'Light';
+      case ThemeMode.dark:
+        return 'Dark';
+      case ThemeMode.system:
+        return 'Follow system';
+    }
+  }
+}
+
+class _ThemeModeToggle extends StatelessWidget {
+  const _ThemeModeToggle({
+    required this.currentMode,
+    required this.onChanged,
+    required this.activeColor,
+  });
+
+  final ThemeMode currentMode;
+  final ValueChanged<ThemeMode> onChanged;
+  final Color activeColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<ThemeMode>(
+      style: SegmentedButton.styleFrom(
+        selectedBackgroundColor: activeColor.withValues(alpha: 0.15),
+        selectedForegroundColor: activeColor,
+        side: BorderSide(color: activeColor.withValues(alpha: 0.3)),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        minimumSize: const Size(0, 32),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      showSelectedIcon: false,
+      segments: const [
+        ButtonSegment<ThemeMode>(
+          value: ThemeMode.light,
+          icon: Icon(Icons.light_mode_outlined, size: 17),
+          tooltip: 'Light',
+        ),
+        ButtonSegment<ThemeMode>(
+          value: ThemeMode.system,
+          icon: Icon(Icons.brightness_auto_outlined, size: 17),
+          tooltip: 'System',
+        ),
+        ButtonSegment<ThemeMode>(
+          value: ThemeMode.dark,
+          icon: Icon(Icons.dark_mode_outlined, size: 17),
+          tooltip: 'Dark',
+        ),
+      ],
+      selected: {currentMode},
+      onSelectionChanged: (selection) => onChanged(selection.first),
     );
   }
 }

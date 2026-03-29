@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_cubit.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth_event.dart';
 import 'injection_container.dart';
@@ -30,6 +31,7 @@ class _MyAppState extends State<MyApp> {
   // guard can read the current state without a BuildContext).
   late final AuthBloc _authBloc;
   late final GoRouter _router;
+  late final ThemeCubit _themeCubit;
   StreamSubscription<Uri>? _linkSubscription;
 
   @override
@@ -38,6 +40,7 @@ class _MyAppState extends State<MyApp> {
     _authBloc = sl<AuthBloc>();
     _authBloc.add(AppStarted(initialUri: widget.initialUri));
     _router = createRouter(_authBloc);
+    _themeCubit = ThemeCubit();
     _listenForIncomingLinks();
   }
 
@@ -58,6 +61,7 @@ class _MyAppState extends State<MyApp> {
   void dispose() {
     _linkSubscription?.cancel();
     _authBloc.close();
+    _themeCubit.close();
     super.dispose();
   }
 
@@ -66,6 +70,7 @@ class _MyAppState extends State<MyApp> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>.value(value: _authBloc),
+        BlocProvider<ThemeCubit>.value(value: _themeCubit),
         BlocProvider<NetworkBloc>(
           create: (_) => sl<NetworkBloc>()..add(NetworkCheckRequested()),
         ),
@@ -82,13 +87,17 @@ class _MyAppState extends State<MyApp> {
           create: (context) => sl<ProfileBloc>()..add(FetchProfile()),
         ),
       ],
-      child: MaterialApp.router(
-        title: 'SabiStyle',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        routerConfig: _router,
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, themeMode) {
+          return MaterialApp.router(
+            title: 'SabiStyle',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeMode,
+            routerConfig: _router,
+          );
+        },
       ),
     );
   }
