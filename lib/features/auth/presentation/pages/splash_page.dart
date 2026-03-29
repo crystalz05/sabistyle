@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sabistyle/core/constants/app_assets.dart';
 
 /// Pure loading screen shown on cold start while the auth state resolves.
 ///
@@ -51,17 +52,17 @@ class _SplashPageState extends State<SplashPage>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // App icon / logo
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Icon(
-                  Icons.shopping_bag_rounded,
-                  size: 52,
-                  color: colorScheme.primary,
+              SizedBox(
+                width: 120,
+                height: 120,
+                child: Image.asset(
+                  Theme.of(context).brightness == Brightness.dark
+                      ? AppAssets.lightThemeIcon
+                      : AppAssets.darkThemeIcon,
+                  color: Theme.of(context).brightness == Brightness.dark 
+                      ? Colors.black 
+                      : null,
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(height: 24),

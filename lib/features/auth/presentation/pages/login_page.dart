@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sabistyle/core/constants/app_assets.dart';
 
 import '../../../../app_router.dart';
 import '../../../widgets/app_button.dart';
@@ -153,21 +154,18 @@ class _LoginPageState extends State<LoginPage>
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Container(
+            SizedBox(
               width: 54,
               height: 54,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [theme.colorScheme.secondary, theme.colorScheme.primary],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(
-                Icons.shopping_bag_rounded,
-                color: theme.colorScheme.onPrimary,
-                size: 30,
+              child: Image.asset(
+                theme.brightness == Brightness.dark
+                    ? AppAssets.darkThemeIcon
+                    : AppAssets.lightThemeIcon,
+                color: theme.brightness == Brightness.dark 
+                    ? theme.colorScheme.primary 
+                    : null,
+                width: 100,
+                height: 100,
               ),
             ),
             const SizedBox(width: 14),
